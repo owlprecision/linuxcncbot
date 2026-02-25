@@ -94,7 +94,7 @@
 
 ## Phase 6: Hardware Handoff (EK1100 + 2x EL7031)
 
-- ⬜ **target-host-bootstrap** — add host-side script for existing LinuxCNC PC
+- ✅ **target-host-bootstrap** — add host-side script for existing LinuxCNC PC
   - *Goal:* make a user able to clone this repo and run one bootstrap command on an existing PREEMPT-RT LinuxCNC install.
   - *Deliverables:* `scripts/bootstrap-target-host.sh` to install required packages/tools on Debian PREEMPT-RT host, set up repo paths, and verify prerequisites.
 
