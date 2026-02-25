@@ -43,7 +43,7 @@
 - ✅ **sim-hal** — `config/sim.hal` — simulation HAL overrides
   - *Depends on:* machine-hal
   - *Instructions:* Create sim-specific HAL that provides simulated position feedback loops for each axis. Uses `sim_encoder` and loopback connections so LinuxCNC thinks motors are responding.
-- ⬜ **ethercat-conf-template** — `config/ethercat-conf.xml` — EtherCAT config template
+- ✅ **ethercat-conf-template** — `config/ethercat-conf.xml` — EtherCAT config template
   - *Depends on:* config-profiles
   - *Instructions:* Create XML derived from reference repo's ethercat-conf.xml. Parameterize slave count and VID/PID per profile. Not loaded in sim mode but ready for hardware.
 
@@ -111,3 +111,4 @@
 - `2026-02-25T22:06:36Z` **machine-hal** → ✅ done — Completed in iteration 2 (167s)
 - `2026-02-25T22:06:38Z` **sim-hal** → 🔄 in-progress — Starting iteration 3
 - `2026-02-25T22:09:06Z` **sim-hal** → ✅ done — Completed in iteration 3 (148s)
+- `2026-02-25T22:09:09Z` **ethercat-conf-template** → 🔄 in-progress — Starting iteration 4
