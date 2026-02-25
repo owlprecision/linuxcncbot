@@ -130,3 +130,4 @@
 - `2026-02-25T22:31:00Z` **test-gcode-basic** → 🔄 in-progress — Starting iteration 12
 - `2026-02-25T22:33:24Z` **test-gcode-basic** → ✅ done — Completed in iteration 12 (136s)
 - `2026-02-25T22:33:34Z` **test-axis-limits** → 🔄 in-progress — Starting iteration 13
+- `2026-02-25T22:35:56Z` **test-axis-limits** → ✅ done — Completed in iteration 13 (142s)
