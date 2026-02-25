@@ -40,7 +40,7 @@
 - ✅ **machine-hal** — `config/machine.hal` — HAL template for sim mode
   - *Depends on:* config-profiles
   - *Instructions:* Create HAL file that loads sim components (sim_encoder, sim_spindle, etc.) instead of lcec/cia402. Structure it modularly: motion setup section, then per-axis sections that can be swapped between sim and hardware HAL includes.
-- ⬜ **sim-hal** — `config/sim.hal` — simulation HAL overrides
+- ✅ **sim-hal** — `config/sim.hal` — simulation HAL overrides
   - *Depends on:* machine-hal
   - *Instructions:* Create sim-specific HAL that provides simulated position feedback loops for each axis. Uses `sim_encoder` and loopback connections so LinuxCNC thinks motors are responding.
 - ⬜ **ethercat-conf-template** — `config/ethercat-conf.xml` — EtherCAT config template
@@ -109,3 +109,4 @@
 - `2026-02-25T22:03:47Z` **machine-ini** → ✅ done — Completed in iteration 1 (130s)
 - `2026-02-25T22:03:49Z` **machine-hal** → 🔄 in-progress — Starting iteration 2
 - `2026-02-25T22:06:36Z` **machine-hal** → ✅ done — Completed in iteration 2 (167s)
+- `2026-02-25T22:06:38Z` **sim-hal** → 🔄 in-progress — Starting iteration 3

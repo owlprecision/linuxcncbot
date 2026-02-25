@@ -58,3 +58,6 @@ Summary: Completed successfully in 130s
 Task: machine-hal
 Status: PASSED
 Summary: Completed successfully in 167s
+[sim-hal - WIP] Completed: Reviewed machine.hal/profile context and started sim HAL implementation via config specialist. Remaining: validate file, update PLAN, and commit.
+[sim-hal - WIP] Completed: Created config/sim.hal with sim_encoder scheduling and per-axis command/feedback loopback wiring. Remaining: mark PLAN done and commit.
+[sim-hal - DONE] Completed: Added config/sim.hal simulation overrides with sim_encoder-based X/Y/Z feedback loops and amp-enable loopbacks, validated wiring patterns, and marked PLAN task complete. Remaining: none.

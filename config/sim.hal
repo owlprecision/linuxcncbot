@@ -1,0 +1,39 @@
+# Simulation HAL overrides (sim-first).
+# This file is intended to be sourced with machine.hal and reuses its naming.
+
+# -----------------------------------------------------------------------------
+# Sim encoder scheduling (servo-thread for simple sim-first operation)
+# -----------------------------------------------------------------------------
+addf sim-enc-x.make-pulses servo-thread
+addf sim-enc-x.update-speed servo-thread
+addf sim-enc-y.make-pulses servo-thread
+addf sim-enc-y.update-speed servo-thread
+addf sim-enc-z.make-pulses servo-thread
+addf sim-enc-z.update-speed servo-thread
+
+# Sane defaults for generated encoder activity.
+setp sim-enc-x.scale 1.0
+setp sim-enc-y.scale 1.0
+setp sim-enc-z.scale 1.0
+setp sim-enc-x.ppr 1000
+setp sim-enc-y.ppr 1000
+setp sim-enc-z.ppr 1000
+
+# -----------------------------------------------------------------------------
+# Axis loopbacks (joint command -> sim encoder speed + motor feedback)
+# -----------------------------------------------------------------------------
+
+# --- Axis X (joint.0) ---
+net x-pos-cmd-sim   joint.0.motor-pos-cmd => sim-enc-x.speed
+net x-pos-fb-sim    sim-enc-x.position     => joint.0.motor-pos-fb
+net x-amp-enable    joint.0.amp-enable-out => joint.0.amp-enable-in
+
+# --- Axis Y (joint.1) ---
+net y-pos-cmd-sim   joint.1.motor-pos-cmd => sim-enc-y.speed
+net y-pos-fb-sim    sim-enc-y.position     => joint.1.motor-pos-fb
+net y-amp-enable    joint.1.amp-enable-out => joint.1.amp-enable-in
+
+# --- Axis Z (joint.2) ---
+net z-pos-cmd-sim   joint.2.motor-pos-cmd => sim-enc-z.speed
+net z-pos-fb-sim    sim-enc-z.position     => joint.2.motor-pos-fb
+net z-amp-enable    joint.2.amp-enable-out => joint.2.amp-enable-in
