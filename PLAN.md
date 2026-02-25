@@ -121,7 +121,7 @@
     2) LinuxCNC config loads cleanly  
     3) axis enable/jog test passes at low speed
 
-- ⬜ **one-command-handoff-flow** — finalize user-facing handoff command
+- ✅ **one-command-handoff-flow** — finalize user-facing handoff command
   - *Goal:* a user should run one documented command sequence from a fresh clone.
   - *Deliverables:* README section: clone → bootstrap target host → apply beckhoff profile → deploy → verify.
 
@@ -190,3 +190,4 @@
 - `2026-02-25T23:36:54Z` **stepgen-and-scaling-calibration** → ✅ done — Completed in iteration 5 (291s)
 - `2026-02-25T23:36:57Z` **hardware-verification-gates** → 🔄 in-progress — Starting iteration 6
 - `2026-02-25T23:41:14Z` **hardware-verification-gates** → ✅ done — Completed in iteration 6 (257s)
+- `2026-02-25T23:41:17Z` **one-command-handoff-flow** → 🔄 in-progress — Starting iteration 7

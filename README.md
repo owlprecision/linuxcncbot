@@ -16,6 +16,31 @@ An iterative development workspace for configuring and testing a LinuxCNC instal
 
 The loop runs unattended, invoking `copilot` CLI repeatedly until all tasks in PLAN.md are done or the iteration limit is reached. Re-run to continue where it left off.
 
+## One-command handoff flow (existing LinuxCNC target host)
+
+Use this on a Debian PREEMPT-RT LinuxCNC target host that already exists.
+
+```bash
+# 1) Clone repo
+git clone git@github.com:owlprecision/linuxcncbot.git linuxcncbot
+cd linuxcncbot
+
+# 2) Bootstrap target host
+./scripts/bootstrap-target-host.sh
+
+# 3) Apply Beckhoff profile
+printf '%s\n' 'beckhoff-ek1100-2x-el7031.env' > config/profiles/active
+
+# 4) Deploy (render + push config)
+./ralph/configure.sh
+./ralph/deploy.sh
+
+# 5) Verify (runs test suite + HAL pin dump)
+./ralph/verify.sh
+```
+
+`./ralph/verify.sh` calls `./ralph/test.sh`, which includes hardware verification gates for EtherCAT profiles.
+
 ## What is the Ralph Loop?
 
 The ralph loop is an outer shell that wraps GitHub Copilot CLI and re-invokes it repeatedly with fresh context until all tasks are done:

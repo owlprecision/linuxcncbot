@@ -217,3 +217,6 @@ Summary: Completed successfully in 291s
 Task: hardware-verification-gates
 Status: PASSED
 Summary: Completed successfully in 257s
+[one-command-handoff-flow - WIP] Completed: Reviewed PLAN/progress/git history and started README handoff-flow update delegation. Remaining: implement README one-command flow, validate references, mark PLAN done, and commit.
+[one-command-handoff-flow - WIP] Completed: Added README one-command handoff section (clone/bootstrap/apply profile/deploy/verify) and validated referenced executables. Remaining: mark PLAN done and commit.
+[one-command-handoff-flow - DONE] Completed: Added README handoff section with fresh-clone command sequence (clone, bootstrap target host, apply beckhoff profile, configure+deploy, verify), marked PLAN task complete, and validated referenced scripts are executable. Remaining: none.
