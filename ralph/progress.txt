@@ -49,3 +49,7 @@ Summary: Completed successfully in 181s
 Task: machine-ini
 Status: PASSED
 Summary: Completed successfully in 130s
+[machine-hal - WIP] Completed: Reviewed PLAN, recent progress, commits, and existing machine/profile templates. Remaining: implement config/machine.hal sim modular template and validate.
+[machine-hal - WIP] Completed: Delegated creation of config/machine.hal sim-first modular template and started validation checks. Remaining: finalize verification, update PLAN, and commit.
+[machine-hal - WIP] Completed: Validated machine.hal sim component usage, no active lcec/cia402 wiring, and section ordering. Remaining: mark PLAN done, commit, and finish.
+[machine-hal - DONE] Completed: Created config/machine.hal sim-first modular HAL template (motion setup + per-axis sections) using sim components, validated structure, and marked PLAN task complete. Remaining: none.

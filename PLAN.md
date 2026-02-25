@@ -37,7 +37,7 @@
 - ✅ **machine-ini** — `config/machine.ini` — parameterized INI template
   - *Depends on:* config-profiles
   - *Instructions:* Create INI derived from reference repo's EL8_machine.ini but simplified to 3-axis XYZ. Use shell variable substitution markers (e.g., `${AXIS_X_MAX_VEL}`) that `ralph/configure.sh` will expand from the active profile. Include DISPLAY, KINS (trivkins coordinates=XYZ), TRAJ, EMCMOT, HAL, and JOINT_0/1/2 sections.
-- ⬜ **machine-hal** — `config/machine.hal` — HAL template for sim mode
+- ✅ **machine-hal** — `config/machine.hal` — HAL template for sim mode
   - *Depends on:* config-profiles
   - *Instructions:* Create HAL file that loads sim components (sim_encoder, sim_spindle, etc.) instead of lcec/cia402. Structure it modularly: motion setup section, then per-axis sections that can be swapped between sim and hardware HAL includes.
 - ⬜ **sim-hal** — `config/sim.hal` — simulation HAL overrides
@@ -107,3 +107,4 @@
 - `2026-02-25T21:59:36Z` **bootstrap-script** → ✅ done — Completed in iteration 1 (181s)
 - `2026-02-25T22:01:37Z` **machine-ini** → 🔄 in-progress — Starting iteration 1
 - `2026-02-25T22:03:47Z` **machine-ini** → ✅ done — Completed in iteration 1 (130s)
+- `2026-02-25T22:03:49Z` **machine-hal** → 🔄 in-progress — Starting iteration 2

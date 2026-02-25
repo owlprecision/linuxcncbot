@@ -1,0 +1,52 @@
+# Parameterized LinuxCNC HAL template (sim-first).
+# Values are expanded from config/profiles/*.env by the config generation flow.
+
+# -----------------------------------------------------------------------------
+# Motion/thread setup (base machine wiring)
+# -----------------------------------------------------------------------------
+loadrt [KINS]KINEMATICS
+loadrt [EMCMOT]EMCMOT base_period_nsec=0 servo_period_nsec=${SERVO_PERIOD} num_joints=[KINS]JOINTS
+loadrt threads name1=servo-thread period1=${SERVO_PERIOD}
+
+# Sim components for sim mode (no lcec/cia402 in this template)
+loadrt sim_encoder names=sim-enc-x,sim-enc-y,sim-enc-z
+loadrt sim_spindle names=sim-spindle
+loadrt scale count=3
+
+addf motion-command-handler servo-thread
+addf motion-controller servo-thread
+addf scale.0 servo-thread
+addf scale.1 servo-thread
+addf scale.2 servo-thread
+
+# -----------------------------------------------------------------------------
+# Axis hooks (swap-friendly)
+#
+# For future split files, these sections can move to per-axis includes like:
+#   source axis-x-sim.hal   (or axis-x-hw.hal)
+#   source axis-y-sim.hal   (or axis-y-hw.hal)
+#   source axis-z-sim.hal   (or axis-z-hw.hal)
+# -----------------------------------------------------------------------------
+
+# --- Axis X (joint.0) ---
+setp scale.0.gain ${AXIS_X_SCALE}
+net x-pos-cmd      joint.0.motor-pos-cmd => scale.0.in
+net x-pos-fb       scale.0.out            => joint.0.motor-pos-fb
+net x-amp-enable   joint.0.amp-enable-out => joint.0.amp-enable-in
+
+# --- Axis Y (joint.1) ---
+setp scale.1.gain ${AXIS_Y_SCALE}
+net y-pos-cmd      joint.1.motor-pos-cmd => scale.1.in
+net y-pos-fb       scale.1.out            => joint.1.motor-pos-fb
+net y-amp-enable   joint.1.amp-enable-out => joint.1.amp-enable-in
+
+# --- Axis Z (joint.2) ---
+setp scale.2.gain ${AXIS_Z_SCALE}
+net z-pos-cmd      joint.2.motor-pos-cmd => scale.2.in
+net z-pos-fb       scale.2.out            => joint.2.motor-pos-fb
+net z-amp-enable   joint.2.amp-enable-out => joint.2.amp-enable-in
+
+# -----------------------------------------------------------------------------
+# Spindle hook (sim loopback by default)
+# -----------------------------------------------------------------------------
+net spindle-speed-cmd  motion.spindle-speed-out => motion.spindle-speed-in
