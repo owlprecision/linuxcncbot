@@ -73,7 +73,7 @@
 - ✅ **test-hal-pins** — `tests/test-hal-pins.sh` — verify HAL pins
   - *Depends on:* configure-script
   - *Instructions:* Start halcmd, load HAL file, verify expected pins exist (joint.0/1/2.motor-pos-cmd, etc.). Compare against expected pin list from profile.
-- ⬜ **test-gcode-basic** — `tests/test-gcode-basic.sh` — run basic G-code
+- ✅ **test-gcode-basic** — `tests/test-gcode-basic.sh` — run basic G-code
   - *Depends on:* configure-script
   - *Instructions:* Run a simple G-code program (G0 X10 Y10 Z-5; G1 X20 F100; M2) through LinuxCNC in batch mode. Verify exit code 0 and no error in logs.
 - ⬜ **test-axis-limits** — `tests/test-axis-limits.sh` — verify soft limits
@@ -127,3 +127,4 @@
 - `2026-02-25T22:28:30Z` **test-config-loads** → ✅ done — Completed in iteration 10 (121s)
 - `2026-02-25T22:28:32Z` **test-hal-pins** → 🔄 in-progress — Starting iteration 11
 - `2026-02-25T22:30:58Z` **test-hal-pins** → ✅ done — Completed in iteration 11 (146s)
+- `2026-02-25T22:31:00Z` **test-gcode-basic** → 🔄 in-progress — Starting iteration 12
