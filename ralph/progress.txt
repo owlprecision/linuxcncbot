@@ -71,3 +71,8 @@ Summary: Completed successfully in 148s
 [ethercat-conf-template - WIP] Completed: Added config/ethercat-conf.xml 3-axis EtherCAT template with ${ETHERCAT_SLAVE_COUNT:-3} and ${ETHERCAT_VID}/${ETHERCAT_PID} placeholders. Remaining: run final review and hand off completion.
 [ethercat-conf-template - WIP] Completed: Adjusted EtherCAT template/profile placeholders for envsubst compatibility and validated XML + placeholder presence. Remaining: mark PLAN done and commit.
 [ethercat-conf-template - DONE] Completed: Added config/ethercat-conf.xml hardware-ready 3-axis EtherCAT template derived from reference with ${ETHERCAT_SLAVE_COUNT}/${ETHERCAT_VID}/${ETHERCAT_PID} placeholders, updated profile vars, validated XML, and marked PLAN task complete. Remaining: none.
+
+--- iteration 4 (2026-02-25T22:11:55Z) ---
+Task: ethercat-conf-template
+Status: PASSED
+Summary: Completed successfully in 166s
