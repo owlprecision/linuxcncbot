@@ -45,7 +45,8 @@ Key design principles:
 
 ```bash
 # Run the autonomous loop (invokes copilot CLI repeatedly)
-./ralph/loop.sh              # Default: 20 iterations
+./ralph/loop.sh              # Run until done or Ctrl+C
+./ralph/loop.sh 1            # Run exactly one full step
 ./ralph/loop.sh 50           # Custom iteration limit
 ./ralph/loop.sh --model claude-opus-4.6  # Use a specific model
 ./ralph/loop.sh --dry-run    # Preview prompt, no API calls
@@ -56,6 +57,7 @@ Key design principles:
 ```
 
 Re-run `./ralph/loop.sh` to continue where the last run left off. All state is in PLAN.md and `ralph/progress.txt`.
+If `--model` is omitted, Copilot CLI uses its currently configured default model.
 
 ## Architecture
 
@@ -82,6 +84,7 @@ linuxcncbot/
 │   ├── verify.sh        # Verification (the lynchpin)
 │   ├── update-plan.sh   # Update PLAN.md statuses
 │   └── commit.sh        # Git commit iteration
+├── .github/agents/      # Reusable custom specialist agents used by loop
 ├── tests/               # Test suite (run inside VM)
 ├── docs/                # Hardware test & configuration guides
 ├── vm/                  # (gitignored) VM disk images & runtime

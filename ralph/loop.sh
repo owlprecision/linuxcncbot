@@ -21,6 +21,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 PLAN_FILE="$REPO_ROOT/PLAN.md"
 PROGRESS_FILE="$REPO_ROOT/ralph/progress.txt"
 PROMPT_FILE="$SCRIPT_DIR/PROMPT_build.md"
+AGENTS_DIR="$REPO_ROOT/.github/agents"
 COMPLETE_SIGNAL='<promise>COMPLETE</promise>'
 
 # Defaults — 0 means unlimited (run until done or Ctrl+C)
@@ -142,11 +143,12 @@ Usage:
 
 The loop:
   1. Reads PLAN.md for the next ⬜ (or 🔄 interrupted) task
-  2. Invokes 'copilot -p <prompt>' with the task instructions
-  3. Checks output for completion signal: ${COMPLETE_SIGNAL}
-  4. Logs results to ralph/progress.txt
-  5. Commits changes to git
-  6. Repeats until all tasks pass or limit reached
+  2. Provides available custom agents from .github/agents/ in the prompt
+  3. Invokes 'copilot -p <prompt>' and lets AI choose/delegate subagents
+  4. Checks output for completion signal: ${COMPLETE_SIGNAL}
+  5. Logs results to ralph/progress.txt
+  6. Commits changes to git
+  7. Repeats until all tasks pass or limit reached
 
 Interruption & resume:
   - Ctrl+C at any time safely stops the loop
@@ -221,6 +223,7 @@ build_prompt() {
     local task_block="$1"
     local progress_tail="$2"
     local is_resume="$3"
+    local available_agents="$4"
 
     # Read the build prompt template
     if [[ -f "$PROMPT_FILE" ]]; then
@@ -246,6 +249,13 @@ If the task looks already complete, verify it works and mark it done.
     # Inject task and progress into the template
     local prompt="$template
 ${resume_note}
+## AVAILABLE CUSTOM AGENTS
+
+Choose the most appropriate custom agent(s) from the list below for this task.
+The AI should decide delegation strategy based on task requirements.
+
+${available_agents}
+
 ## YOUR ASSIGNED TASK FOR THIS ITERATION
 
 ${task_block}
@@ -277,6 +287,22 @@ invoke_copilot() {
     cat "$tmp_out"
     rm -f "$tmp_out"
     return "$rc"
+}
+
+list_available_agents() {
+    if [[ ! -d "$AGENTS_DIR" ]]; then
+        echo "- (none found in .github/agents/)"
+        return
+    fi
+    find "$AGENTS_DIR" -maxdepth 1 -name "*.agent.md" -type f | sort | while IFS= read -r f; do
+        local name
+        name="$(basename "$f" .agent.md)"
+        echo "- ${name}"
+    done
+    # Ensure fallback if directory exists but empty
+    if [[ -z "$(find "$AGENTS_DIR" -maxdepth 1 -name "*.agent.md" -type f 2>/dev/null)" ]]; then
+        echo "- (none found in .github/agents/)"
+    fi
 }
 
 log_progress() {
@@ -405,10 +431,12 @@ while true; do
 
     # Set current task for cleanup handler
     CURRENT_TASK_ID="$task_id"
+    echo -e "  Agent strategy: ${WHITE}AI-selected delegation${NC}"
 
     # Build prompt
     progress_tail=$(get_progress_tail)
-    prompt=$(build_prompt "$task_block" "$progress_tail" "$is_resume")
+    available_agents=$(list_available_agents)
+    prompt=$(build_prompt "$task_block" "$progress_tail" "$is_resume" "$available_agents")
 
     # Dry-run mode: show prompt and exit
     if [[ "$DRY_RUN" == "true" ]]; then
@@ -491,7 +519,13 @@ if [[ "$COMPLETE" == "true" ]]; then
     exit 0
 else
     echo ""
-    echo -e "  ${YELLOW}◐ Iteration limit reached. Re-run to continue.${NC}"
+    if [[ "$MAX_ITERATIONS" -gt 0 ]] && [[ "$ITERATION" -ge "$MAX_ITERATIONS" ]]; then
+        echo -e "  ${GREEN}✓ Requested step limit completed successfully.${NC}"
+        echo -e "  ${GRAY}  More tasks remain. Re-run to continue.${NC}"
+        echo -e "  ${GRAY}  State preserved in PLAN.md and ralph/progress.txt${NC}"
+        exit 0
+    fi
+    echo -e "  ${YELLOW}◐ Loop stopped before completion.${NC}"
     echo -e "  ${GRAY}  State preserved in PLAN.md and ralph/progress.txt${NC}"
     exit 1
 fi

@@ -13,6 +13,9 @@ Implement the assigned task from PLAN.md (provided below). Follow the task's
 *Instructions* section closely. The task description tells you exactly what file(s)
 to create or modify and what they should do.
 
+Use custom agents from `.github/agents/` for specialist work.
+You (the AI) must choose and delegate to the most appropriate subagent(s) for this task.
+
 Key rules:
 - Create scripts that are executable (`chmod +x`)
 - Use `#!/usr/bin/env bash` and `set -euo pipefail` for shell scripts
