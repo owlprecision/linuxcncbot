@@ -25,3 +25,8 @@ Summary: Completed successfully in 112s
 [vm-control-script - WIP] Completed: Finalized vm-control.sh design for start/stop/ssh/snapshot/restore/status with PID tracking. Remaining: implement script and run validation.
 [vm-control-script - WIP] Completed: Verified vm-control.sh syntax plus help/status output and executable permissions. Remaining: mark PLAN done and commit changes.
 [vm-control-script - DONE] Completed: Implemented scripts/vm-control.sh with start/stop/ssh/snapshot/restore/status, PID tracking at vm/qemu.pid, validated syntax/help/status, and marked PLAN task complete. Remaining: none.
+
+--- iteration 1 (2026-02-25T21:38:17Z) ---
+Task: vm-control-script
+Status: PASSED
+Summary: Completed successfully in 101s
