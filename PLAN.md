@@ -19,7 +19,7 @@
 - ✅ **config-profiles** — `config/profiles/*.env` — parameterized machine profiles
 - ✅ **commit-script** — `ralph/commit.sh` — auto-commit after each iteration
 - ✅ **update-plan-script** — `ralph/update-plan.sh` — update task statuses in this file
-- ⬜ **create-vm-script** — `scripts/create-vm.sh` — create QEMU VM with Debian 12 + preseed
+- ✅ **create-vm-script** — `scripts/create-vm.sh` — create QEMU VM with Debian 12 + preseed
   - *Depends on:* install-qemu-script, fetch-deps-script, preseed-config
   - *Instructions:* Create a script that builds a qcow2 disk image (20GB), launches QEMU with the Debian netinst ISO and preseed for unattended install, configures SSH port forwarding (host 2222 → guest 22), and waits for install completion. Use HVF acceleration on macOS when available.
 - ⬜ **provision-vm-script** — `scripts/provision-vm.sh` — install LinuxCNC in the VM
@@ -97,3 +97,4 @@
 ## Log
 
 <!-- Ralph loop appends timestamped entries here -->
+- `2026-02-25T17:22:50Z` **create-vm-script** → 🔄 in-progress — Starting iteration 1

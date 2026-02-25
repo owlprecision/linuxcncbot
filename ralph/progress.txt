@@ -5,3 +5,4 @@
 --- session start ---
 Bootstrap complete. PLAN.md, README.md, scripts, config profiles, and ralph loop created.
 Next: create-vm-script (QEMU VM creation)
+[create-vm-script - DONE] Created scripts/create-vm.sh: builds 20GB qcow2 disk, extracts kernel/initrd from Debian ISO, serves preseed via HTTP, launches QEMU with HVF/KVM/TCG acceleration, SSH forwarding 2222→22, -nographic -no-reboot for unattended install. Idempotent (skips if image exists, --force to recreate).
