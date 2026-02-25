@@ -1,0 +1,22 @@
+# VM runtime artifacts
+vm/*.qcow2
+vm/*.img
+vm/*.iso
+vm/*.pid
+vm/*.log
+vm/*.sock
+
+# External dependencies (cloned at runtime)
+external/
+
+# OS/editor artifacts
+.DS_Store
+*.swp
+*.swo
+*~
+\#*\#
+
+# Temporary/generated files
+*.tmp
+*.bak
+build/
