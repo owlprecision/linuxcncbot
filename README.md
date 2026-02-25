@@ -41,6 +41,87 @@ printf '%s\n' 'beckhoff-ek1100-2x-el7031.env' > config/profiles/active
 
 `./ralph/verify.sh` calls `./ralph/test.sh`, which includes hardware verification gates for EtherCAT profiles.
 
+## Start over safely (messy existing machine setup)
+
+Use this when the machine already has unknown/manual LinuxCNC + EtherCAT changes and you want a clean, repo-managed baseline **without losing rollback options**.
+
+### 0) Prerequisites
+
+```bash
+cd /path/to/linuxcncbot
+chmod +x scripts/bootstrap-target-host.sh scripts/ethercat-nic-setup.sh scripts/igh-master-runtime-setup.sh ralph/configure.sh ralph/deploy.sh ralph/verify.sh
+```
+
+### 1) Backup existing LinuxCNC + EtherCAT/runtime state (required)
+
+```bash
+# Create a timestamped backup root.
+BACKUP_ROOT="$HOME/linuxcnc-migration-backups/$(date +%Y%m%d-%H%M%S)"
+mkdir -p "$BACKUP_ROOT"
+
+# Backup common LinuxCNC config locations (only if they exist).
+[ -d "$HOME/linuxcnc/configs" ] && cp -a "$HOME/linuxcnc/configs" "$BACKUP_ROOT/linuxcnc-configs-home"
+[ -d /etc/linuxcnc ] && sudo cp -a /etc/linuxcnc "$BACKUP_ROOT/linuxcnc-configs-etc"
+[ -d /usr/share/linuxcnc/configs ] && sudo cp -a /usr/share/linuxcnc/configs "$BACKUP_ROOT/linuxcnc-configs-usrshare"
+
+# Backup EtherCAT/runtime config files touched by this repo's setup scripts.
+[ -f /etc/default/ethercat ] && sudo cp -a /etc/default/ethercat "$BACKUP_ROOT/etc-default-ethercat"
+[ -f /etc/NetworkManager/conf.d/90-ethercat-unmanaged.conf ] && sudo cp -a /etc/NetworkManager/conf.d/90-ethercat-unmanaged.conf "$BACKUP_ROOT/90-ethercat-unmanaged.conf"
+
+# Save quick machine state snapshots for audit/rollback.
+ip -br link > "$BACKUP_ROOT/ip-link.txt"
+ip -br addr > "$BACKUP_ROOT/ip-addr.txt"
+sudo systemctl status ethercat --no-pager > "$BACKUP_ROOT/ethercat-service-status.txt" || true
+echo "Backups written to: $BACKUP_ROOT"
+```
+
+### 2) Move to repo-managed baseline
+
+```bash
+# 2a) Verify host prerequisites and install missing packages.
+./scripts/bootstrap-target-host.sh
+
+# 2b) Choose machine profile managed by this repo.
+printf '%s\n' 'beckhoff-ek1100-2x-el7031.env' > config/profiles/active
+
+# 2c) Configure deterministic EtherCAT NIC + runtime (replace MAC with your NIC).
+ETHERCAT_NIC_MAC="aa:bb:cc:dd:ee:ff"
+./scripts/ethercat-nic-setup.sh --mac "$ETHERCAT_NIC_MAC"
+./scripts/igh-master-runtime-setup.sh --mac "$ETHERCAT_NIC_MAC"
+
+# 2d) Render and deploy repo config to this host (update user/key if needed).
+./ralph/configure.sh
+VM_SSH_HOST=localhost VM_SSH_PORT=22 VM_SSH_USER="$USER" VM_SSH_KEY="$HOME/.ssh/id_ed25519" VM_LINUXCNC_DIR="$HOME/linuxcnc" ./ralph/deploy.sh
+
+# 2e) Run verification gates.
+VM_SSH_HOST=localhost VM_SSH_PORT=22 VM_SSH_USER="$USER" VM_SSH_KEY="$HOME/.ssh/id_ed25519" ./ralph/verify.sh
+```
+
+### 3) Roll back safely to pre-migration state
+
+Use the same `BACKUP_ROOT` path you created above.
+
+```bash
+# Stop EtherCAT service before restoring runtime config files.
+sudo systemctl stop ethercat || true
+
+# Restore EtherCAT/runtime files if backups exist.
+[ -f "$BACKUP_ROOT/etc-default-ethercat" ] && sudo cp -a "$BACKUP_ROOT/etc-default-ethercat" /etc/default/ethercat
+[ -f "$BACKUP_ROOT/90-ethercat-unmanaged.conf" ] && sudo cp -a "$BACKUP_ROOT/90-ethercat-unmanaged.conf" /etc/NetworkManager/conf.d/90-ethercat-unmanaged.conf
+
+# Restore LinuxCNC config trees (choose the locations that existed on your machine).
+[ -d "$BACKUP_ROOT/linuxcnc-configs-home" ] && cp -a "$BACKUP_ROOT/linuxcnc-configs-home/." "$HOME/linuxcnc/configs/"
+[ -d "$BACKUP_ROOT/linuxcnc-configs-etc" ] && sudo cp -a "$BACKUP_ROOT/linuxcnc-configs-etc/." /etc/linuxcnc/
+[ -d "$BACKUP_ROOT/linuxcnc-configs-usrshare" ] && sudo cp -a "$BACKUP_ROOT/linuxcnc-configs-usrshare/." /usr/share/linuxcnc/configs/
+
+# Reload services/networking and re-check status.
+sudo systemctl restart NetworkManager
+sudo systemctl restart ethercat || true
+sudo systemctl status ethercat --no-pager
+```
+
+If rollback is required because deployment failed, keep the repo checkout and backup directory; they help you diff old vs. new configs before retrying.
+
 ## What is the Ralph Loop?
 
 The ralph loop is an outer shell that wraps GitHub Copilot CLI and re-invokes it repeatedly with fresh context until all tasks are done:

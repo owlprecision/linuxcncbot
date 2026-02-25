@@ -225,3 +225,6 @@ Summary: Completed successfully in 257s
 Task: one-command-handoff-flow
 Status: PASSED
 Summary: Completed successfully in 92s
+[restart-safe-migration-path - WIP] Completed: Reviewed assigned task, started planning documentation updates for safe backup/restore and clean re-entry flow. Remaining: draft and validate restart-safe migration procedure, mark PLAN done, and commit.
+[restart-safe-migration-path - WIP] Completed: Updated README with command-oriented start-over-safe migration/backup/rollback procedure and began path/link validation. Remaining: finalize validation results and close task.
+[restart-safe-migration-path - DONE] Completed: Added README start-over-safe migration procedure with explicit backup/restore steps and clean repo-managed migration flow, validated referenced scripts and shell syntax checks, and marked PLAN task complete. Remaining: none.

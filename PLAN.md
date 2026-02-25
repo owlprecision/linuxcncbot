@@ -125,7 +125,7 @@
   - *Goal:* a user should run one documented command sequence from a fresh clone.
   - *Deliverables:* README section: clone → bootstrap target host → apply beckhoff profile → deploy → verify.
 
-- ⬜ **restart-safe-migration-path** — include “start over safely” procedure
+- ✅ **restart-safe-migration-path** — include “start over safely” procedure
   - *Goal:* if his current machine setup is messy, provide clean re-entry.
   - *Deliverables:* explicit backup/restore steps for old configs and a clean migration path to this repo-managed setup.
 
@@ -192,3 +192,4 @@
 - `2026-02-25T23:41:14Z` **hardware-verification-gates** → ✅ done — Completed in iteration 6 (257s)
 - `2026-02-25T23:41:17Z` **one-command-handoff-flow** → 🔄 in-progress — Starting iteration 7
 - `2026-02-25T23:42:49Z` **one-command-handoff-flow** → ✅ done — Completed in iteration 7 (92s)
+- `2026-02-25T23:42:51Z` **restart-safe-migration-path** → 🔄 in-progress — Starting iteration 8
