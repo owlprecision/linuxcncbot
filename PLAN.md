@@ -106,7 +106,7 @@
   - *Goal:* ensure IgH EtherCAT master starts consistently on boot and binds the right NIC.
   - *Deliverables:* configuration + verification steps (`ethercat master`, `ethercat slaves`) captured in scripts/docs.
 
-- ⬜ **beckhoff-el7031-profile** — add concrete hardware profile for EK1100 + 2x EL7031
+- ✅ **beckhoff-el7031-profile** — add concrete hardware profile for EK1100 + 2x EL7031
   - *Goal:* convert current generic/sim setup into a profile a user can activate.
   - *Deliverables:* `config/profiles/beckhoff-ek1100-2x-el7031.env`, matching `config/ethercat-conf.xml` mapping, and LinuxCNC INI/HAL wiring for 2 stepper axes.
 
@@ -184,3 +184,4 @@
 - `2026-02-25T23:23:07Z` **ethercat-nic-setup** → ✅ done — Completed in iteration 2 (175s)
 - `2026-02-25T23:23:09Z` **igh-master-runtime-setup** → 🔄 in-progress — Starting iteration 3
 - `2026-02-25T23:26:12Z` **igh-master-runtime-setup** → ✅ done — Completed in iteration 3 (183s)
+- `2026-02-25T23:26:15Z` **beckhoff-el7031-profile** → 🔄 in-progress — Starting iteration 4

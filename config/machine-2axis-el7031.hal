@@ -1,0 +1,30 @@
+# LinuxCNC HAL wiring for Beckhoff EK1100 + 2x EL7031 (2-axis XY)
+
+loadrt [KINS]KINEMATICS
+loadrt [EMCMOT]EMCMOT base_period_nsec=0 servo_period_nsec=${SERVO_PERIOD} num_joints=[KINS]JOINTS
+loadrt threads name1=servo-thread period1=${SERVO_PERIOD}
+
+# EtherCAT master and Beckhoff chain from build/ethercat-conf.xml
+loadusr -W lcec_conf build/ethercat-conf.xml
+loadrt lcec
+
+addf motion-command-handler servo-thread
+addf motion-controller servo-thread
+addf lcec.read-all servo-thread
+addf lcec.write-all servo-thread
+
+# Terminal operating modes (EL7031: velocity mode for simple initial wiring)
+setp lcec.0.1.opmode 1
+setp lcec.0.2.opmode 1
+
+# --- Axis X / Joint 0 via slave 1 (first EL7031) ---
+net x-amp-enable      joint.0.amp-enable-out => lcec.0.1.st-enable
+net x-vel-cmd         joint.0.vel-cmd        => lcec.0.1.velocity-cmd
+net x-pos-fb          lcec.0.1.position-fb   => joint.0.motor-pos-fb
+net x-drive-fault     lcec.0.1.error         => joint.0.amp-fault-in
+
+# --- Axis Y / Joint 1 via slave 2 (second EL7031) ---
+net y-amp-enable      joint.1.amp-enable-out => lcec.0.2.st-enable
+net y-vel-cmd         joint.1.vel-cmd        => lcec.0.2.velocity-cmd
+net y-pos-fb          lcec.0.2.position-fb   => joint.1.motor-pos-fb
+net y-drive-fault     lcec.0.2.error         => joint.1.amp-fault-in

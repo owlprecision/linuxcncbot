@@ -1,71 +1,42 @@
 <masters>
-  <master idx="0" appTimePeriod="1000000" refClockSyncCycles="-1">
+  <master idx="0" appTimePeriod="${ETHERCAT_APP_TIME_PERIOD}" refClockSyncCycles="${ETHERCAT_REF_CLOCK_SYNC_CYCLES}">
     <!--
-      EtherCAT drive template derived from marcoreps/linuxcnc_leadshine_EL8.
-      Default is a 3-axis XYZ setup; set ${ETHERCAT_SLAVE_COUNT} per profile.
-      Vendor/Product IDs are profile placeholders: vid="${ETHERCAT_VID}" pid="${ETHERCAT_PID}".
-      This file is hardware-ready and intentionally not used by sim profile wiring.
+      Beckhoff hardware profile chain:
+      slave 0: EK1100 coupler
+      slave 1: EL7031 stepper terminal (X)
+      slave 2: EL7031 stepper terminal (Y)
     -->
 
-    <!-- X axis drive (slave 1 of ${ETHERCAT_SLAVE_COUNT}) -->
-    <slave idx="0" type="generic" vid="${ETHERCAT_VID}" pid="${ETHERCAT_PID}" configPdos="true">
+    <slave idx="0" type="generic" vid="${ETHERCAT_COUPLER_VID}" pid="${ETHERCAT_COUPLER_PID}" configPdos="false"/>
+
+    <slave idx="1" type="generic" vid="${ETHERCAT_EL7031_VID}" pid="${ETHERCAT_EL7031_PID}" configPdos="true">
       <dcConf assignActivate="300" sync0Cycle="*1" sync0Shift="0"/>
       <syncManager idx="2" dir="out">
-        <pdo idx="1601">
-          <pdoEntry idx="6040" subIdx="00" bitLen="16" halPin="cia-controlword" halType="u32"/>
-          <pdoEntry idx="6060" subIdx="00" bitLen="8" halPin="opmode" halType="s32"/>
-          <pdoEntry idx="607A" subIdx="00" bitLen="32" halPin="target-position" halType="s32"/>
+        <pdo idx="1600">
+          <pdoEntry idx="7010" subIdx="01" bitLen="1" halPin="st-enable" halType="bit"/>
+          <pdoEntry idx="7010" subIdx="11" bitLen="16" halPin="velocity-cmd" halType="s32"/>
         </pdo>
       </syncManager>
       <syncManager idx="3" dir="in">
         <pdo idx="1a00">
-          <pdoEntry idx="6041" subIdx="00" bitLen="16" halPin="cia-statusword" halType="u32"/>
-          <pdoEntry idx="6061" subIdx="00" bitLen="8" halPin="opmode-display" halType="s32"/>
-          <pdoEntry idx="6064" subIdx="00" bitLen="32" halPin="actual-position" halType="s32"/>
-          <pdoEntry idx="606C" subIdx="00" bitLen="32" halPin="actual-velocity" halType="s32"/>
-          <pdoEntry idx="6077" subIdx="00" bitLen="16" halPin="actual-torque" halType="s32"/>
+          <pdoEntry idx="6010" subIdx="04" bitLen="1" halPin="error" halType="bit"/>
+          <pdoEntry idx="6010" subIdx="11" bitLen="16" halPin="position-fb" halType="s32"/>
         </pdo>
       </syncManager>
     </slave>
 
-    <!-- Y axis drive (slave 2 of ${ETHERCAT_SLAVE_COUNT}) -->
-    <slave idx="1" type="generic" vid="${ETHERCAT_VID}" pid="${ETHERCAT_PID}" configPdos="true">
+    <slave idx="2" type="generic" vid="${ETHERCAT_EL7031_VID}" pid="${ETHERCAT_EL7031_PID}" configPdos="true">
       <dcConf assignActivate="300" sync0Cycle="*1" sync0Shift="0"/>
       <syncManager idx="2" dir="out">
-        <pdo idx="1601">
-          <pdoEntry idx="6040" subIdx="00" bitLen="16" halPin="cia-controlword" halType="u32"/>
-          <pdoEntry idx="6060" subIdx="00" bitLen="8" halPin="opmode" halType="s32"/>
-          <pdoEntry idx="607A" subIdx="00" bitLen="32" halPin="target-position" halType="s32"/>
+        <pdo idx="1600">
+          <pdoEntry idx="7010" subIdx="01" bitLen="1" halPin="st-enable" halType="bit"/>
+          <pdoEntry idx="7010" subIdx="11" bitLen="16" halPin="velocity-cmd" halType="s32"/>
         </pdo>
       </syncManager>
       <syncManager idx="3" dir="in">
         <pdo idx="1a00">
-          <pdoEntry idx="6041" subIdx="00" bitLen="16" halPin="cia-statusword" halType="u32"/>
-          <pdoEntry idx="6061" subIdx="00" bitLen="8" halPin="opmode-display" halType="s32"/>
-          <pdoEntry idx="6064" subIdx="00" bitLen="32" halPin="actual-position" halType="s32"/>
-          <pdoEntry idx="606C" subIdx="00" bitLen="32" halPin="actual-velocity" halType="s32"/>
-          <pdoEntry idx="6077" subIdx="00" bitLen="16" halPin="actual-torque" halType="s32"/>
-        </pdo>
-      </syncManager>
-    </slave>
-
-    <!-- Z axis drive (slave 3 of ${ETHERCAT_SLAVE_COUNT}) -->
-    <slave idx="2" type="generic" vid="${ETHERCAT_VID}" pid="${ETHERCAT_PID}" configPdos="true">
-      <dcConf assignActivate="300" sync0Cycle="*1" sync0Shift="0"/>
-      <syncManager idx="2" dir="out">
-        <pdo idx="1601">
-          <pdoEntry idx="6040" subIdx="00" bitLen="16" halPin="cia-controlword" halType="u32"/>
-          <pdoEntry idx="6060" subIdx="00" bitLen="8" halPin="opmode" halType="s32"/>
-          <pdoEntry idx="607A" subIdx="00" bitLen="32" halPin="target-position" halType="s32"/>
-        </pdo>
-      </syncManager>
-      <syncManager idx="3" dir="in">
-        <pdo idx="1a00">
-          <pdoEntry idx="6041" subIdx="00" bitLen="16" halPin="cia-statusword" halType="u32"/>
-          <pdoEntry idx="6061" subIdx="00" bitLen="8" halPin="opmode-display" halType="s32"/>
-          <pdoEntry idx="6064" subIdx="00" bitLen="32" halPin="actual-position" halType="s32"/>
-          <pdoEntry idx="606C" subIdx="00" bitLen="32" halPin="actual-velocity" halType="s32"/>
-          <pdoEntry idx="6077" subIdx="00" bitLen="16" halPin="actual-torque" halType="s32"/>
+          <pdoEntry idx="6010" subIdx="04" bitLen="1" halPin="error" halType="bit"/>
+          <pdoEntry idx="6010" subIdx="11" bitLen="16" halPin="position-fb" halType="s32"/>
         </pdo>
       </syncManager>
     </slave>

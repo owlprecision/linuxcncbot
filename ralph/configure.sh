@@ -39,10 +39,25 @@ set +a
 
 mkdir -p "${BUILD_DIR}"
 
-envsubst < "${CONFIG_DIR}/machine.ini" > "${BUILD_DIR}/machine.ini"
-envsubst < "${CONFIG_DIR}/machine.hal" > "${BUILD_DIR}/machine.hal"
+machine_ini_template="${MACHINE_INI_TEMPLATE:-machine.ini}"
+machine_hal_template="${MACHINE_HAL_TEMPLATE:-machine.hal}"
+ethercat_conf_template="${ETHERCAT_CONF_TEMPLATE:-ethercat-conf.xml}"
+
+machine_ini_path="${CONFIG_DIR}/${machine_ini_template}"
+machine_hal_path="${CONFIG_DIR}/${machine_hal_template}"
+ethercat_conf_path="${CONFIG_DIR}/${ethercat_conf_template}"
+
+for template_path in "${machine_ini_path}" "${machine_hal_path}" "${CONFIG_DIR}/sim.hal" "${ethercat_conf_path}"; do
+  if [[ ! -f "${template_path}" ]]; then
+    echo "Template file not found: ${template_path}" >&2
+    exit 1
+  fi
+done
+
+envsubst < "${machine_ini_path}" > "${BUILD_DIR}/machine.ini"
+envsubst < "${machine_hal_path}" > "${BUILD_DIR}/machine.hal"
 envsubst < "${CONFIG_DIR}/sim.hal" > "${BUILD_DIR}/sim.hal"
-envsubst < "${CONFIG_DIR}/ethercat-conf.xml" > "${BUILD_DIR}/ethercat-conf.xml"
+envsubst < "${ethercat_conf_path}" > "${BUILD_DIR}/ethercat-conf.xml"
 
 required_sections=(
   DISPLAY
@@ -50,10 +65,16 @@ required_sections=(
   TRAJ
   EMCMOT
   HAL
-  JOINT_0
-  JOINT_1
-  JOINT_2
 )
+
+if [[ -z "${NUM_JOINTS:-}" ]]; then
+  echo "NUM_JOINTS is not set in profile" >&2
+  exit 1
+fi
+
+for ((joint=0; joint<NUM_JOINTS; joint++)); do
+  required_sections+=("JOINT_${joint}")
+done
 
 missing_sections=()
 for section in "${required_sections[@]}"; do
