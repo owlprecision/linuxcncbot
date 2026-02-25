@@ -13,6 +13,7 @@
 #   ./ralph/loop.sh --next       # Show next task (no execution)
 #   ./ralph/loop.sh --dry-run    # Preview prompt without invoking copilot
 #   ./ralph/loop.sh --model X    # Use specific AI model
+#   ./ralph/loop.sh --quiet-copilot # Hide live copilot output
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -27,6 +28,7 @@ MAX_ITERATIONS=0
 MODEL=""
 DRY_RUN=false
 MODE="run"
+SHOW_COPILOT_OUTPUT=true
 
 # Caffeinate PID (to clean up on exit)
 CAFFEINATE_PID=""
@@ -50,6 +52,7 @@ while [[ $# -gt 0 ]]; do
         --next)      MODE="next"; shift ;;
         --dry-run)   DRY_RUN=true; shift ;;
         --model)     MODEL="$2"; shift 2 ;;
+        --quiet-copilot) SHOW_COPILOT_OUTPUT=false; shift ;;
         -h|--help)   MODE="help"; shift ;;
         [0-9]*)      MAX_ITERATIONS="$1"; shift ;;
         *)           echo "Unknown option: $1"; exit 1 ;;
@@ -135,6 +138,7 @@ Usage:
   ./ralph/loop.sh --next       Show next task (no execution)
   ./ralph/loop.sh --dry-run    Preview what would be sent to copilot
   ./ralph/loop.sh --model X    Use specific AI model (e.g., claude-sonnet-4)
+  ./ralph/loop.sh --quiet-copilot  Hide live copilot output (still logged)
 
 The loop:
   1. Reads PLAN.md for the next ⬜ (or 🔄 interrupted) task
@@ -259,8 +263,20 @@ invoke_copilot() {
     if [[ -n "$MODEL" ]]; then
         cli_args+=(--model "$MODEL")
     fi
+    local tmp_out
+    tmp_out="$(mktemp)"
+    local rc=0
 
-    copilot "${cli_args[@]}" 2>&1
+    if [[ "$SHOW_COPILOT_OUTPUT" == "true" ]]; then
+        # Stream copilot output live to stderr while capturing full output for checks/logging.
+        copilot "${cli_args[@]}" 2>&1 | tee "$tmp_out" >&2 || rc=$?
+    else
+        copilot "${cli_args[@]}" >"$tmp_out" 2>&1 || rc=$?
+    fi
+
+    cat "$tmp_out"
+    rm -f "$tmp_out"
+    return "$rc"
 }
 
 log_progress() {
@@ -337,6 +353,7 @@ echo -e "  Max iterations: ${YELLOW}${LIMIT_DISPLAY}${NC}"
 echo -e "  Model:          ${YELLOW}${MODEL:-default}${NC}"
 echo -e "  Plan:           ${GRAY}${PLAN_FILE}${NC}"
 echo -e "  Dry run:        ${YELLOW}${DRY_RUN}${NC}"
+echo -e "  Stream output:  ${YELLOW}${SHOW_COPILOT_OUTPUT}${NC}"
 
 # Start caffeinate for actual runs (not dry-run or status)
 if [[ "$DRY_RUN" != "true" ]]; then
