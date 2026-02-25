@@ -143,3 +143,6 @@ Summary: Completed successfully in 136s
 Task: test-axis-limits
 Status: PASSED
 Summary: Completed successfully in 142s
+[hardware-test-doc - WIP] Completed: Reviewed PLAN/progress/recent commits and collected script/profile context for the hardware test procedure doc. Remaining: draft docs/hardware-test.md, validate, update PLAN, and commit.
+[hardware-test-doc - WIP] Completed: Drafted docs/hardware-test.md with required pre-flight, hardware profile switch, EtherCAT scan, single-axis commissioning, full-machine test, and troubleshooting steps. Remaining: finalize progress, commit, and complete iteration.
+[hardware-test-doc - DONE] Completed: Authored docs/hardware-test.md with step-by-step hardware commissioning procedure (pre-flight, hardware profile switch/deploy, ethercat bus scan, single-axis bring-up, full-machine test, troubleshooting), validated required sections, and marked PLAN task complete. Remaining: none.

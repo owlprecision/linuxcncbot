@@ -82,7 +82,7 @@
 
 ## Phase 5: Documentation
 
-- ⬜ **hardware-test-doc** — `docs/hardware-test.md`
+- ✅ **hardware-test-doc** — `docs/hardware-test.md`
   - *Depends on:* loop-script
   - *Instructions:* Write step-by-step hardware test procedure: pre-flight checklist (wiring, power, EtherCAT chain), switch to hardware profile, EtherCAT bus scan (`ethercat slaves`), single-axis commissioning (enable one axis, jog slowly), full machine test, troubleshooting.
 - ⬜ **configuration-guide-doc** — `docs/configuration-guide.md`
@@ -131,3 +131,4 @@
 - `2026-02-25T22:33:24Z` **test-gcode-basic** → ✅ done — Completed in iteration 12 (136s)
 - `2026-02-25T22:33:34Z` **test-axis-limits** → 🔄 in-progress — Starting iteration 13
 - `2026-02-25T22:35:56Z` **test-axis-limits** → ✅ done — Completed in iteration 13 (142s)
+- `2026-02-25T22:35:58Z` **hardware-test-doc** → 🔄 in-progress — Starting iteration 14
