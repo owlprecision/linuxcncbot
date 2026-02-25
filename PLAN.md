@@ -34,7 +34,7 @@
 
 ## Phase 2: LinuxCNC Configuration
 
-- ⬜ **machine-ini** — `config/machine.ini` — parameterized INI template
+- ✅ **machine-ini** — `config/machine.ini` — parameterized INI template
   - *Depends on:* config-profiles
   - *Instructions:* Create INI derived from reference repo's EL8_machine.ini but simplified to 3-axis XYZ. Use shell variable substitution markers (e.g., `${AXIS_X_MAX_VEL}`) that `ralph/configure.sh` will expand from the active profile. Include DISPLAY, KINS (trivkins coordinates=XYZ), TRAJ, EMCMOT, HAL, and JOINT_0/1/2 sections.
 - ⬜ **machine-hal** — `config/machine.hal` — HAL template for sim mode
@@ -105,3 +105,4 @@
 - `2026-02-25T21:38:17Z` **vm-control-script** → ✅ done — Completed in iteration 1 (101s)
 - `2026-02-25T21:56:35Z` **bootstrap-script** → 🔄 in-progress — Starting iteration 1
 - `2026-02-25T21:59:36Z` **bootstrap-script** → ✅ done — Completed in iteration 1 (181s)
+- `2026-02-25T22:01:37Z` **machine-ini** → 🔄 in-progress — Starting iteration 1
