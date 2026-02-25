@@ -189,3 +189,4 @@
 - `2026-02-25T23:32:03Z` **stepgen-and-scaling-calibration** → 🔄 in-progress — Starting iteration 5
 - `2026-02-25T23:36:54Z` **stepgen-and-scaling-calibration** → ✅ done — Completed in iteration 5 (291s)
 - `2026-02-25T23:36:57Z` **hardware-verification-gates** → 🔄 in-progress — Starting iteration 6
+- `2026-02-25T23:41:14Z` **hardware-verification-gates** → ✅ done — Completed in iteration 6 (257s)
