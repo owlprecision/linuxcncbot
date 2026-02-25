@@ -49,7 +49,7 @@
 
 ## Phase 3: Ralph Loop Orchestration
 
-- ⬜ **configure-script** — `ralph/configure.sh` — generate configs from profile
+- ✅ **configure-script** — `ralph/configure.sh` — generate configs from profile
   - *Depends on:* machine-ini, machine-hal, sim-hal, config-profiles
   - *Instructions:* Read active profile .env, use envsubst to expand templates into build/ directory, validate INI syntax (check required sections exist), output JSON manifest of generated files.
 - ⬜ **deploy-script** — `ralph/deploy.sh` — push config to VM
@@ -113,3 +113,4 @@
 - `2026-02-25T22:09:06Z` **sim-hal** → ✅ done — Completed in iteration 3 (148s)
 - `2026-02-25T22:09:09Z` **ethercat-conf-template** → 🔄 in-progress — Starting iteration 4
 - `2026-02-25T22:11:55Z` **ethercat-conf-template** → ✅ done — Completed in iteration 4 (166s)
+- `2026-02-25T22:11:57Z` **configure-script** → 🔄 in-progress — Starting iteration 5

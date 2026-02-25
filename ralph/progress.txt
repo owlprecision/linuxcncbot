@@ -76,3 +76,5 @@ Summary: Completed successfully in 148s
 Task: ethercat-conf-template
 Status: PASSED
 Summary: Completed successfully in 166s
+[configure-script - WIP] Completed: Created iteration plan and started configure.sh implementation. Remaining: implement script, validate, update PLAN, and commit.
+[configure-script - DONE] Completed: Added ralph/configure.sh to load active profile, expand config templates into build/, validate required INI sections, and emit build/manifest.json JSON output; validated with bash -n and script execution. Remaining: none.
