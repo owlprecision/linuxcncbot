@@ -207,3 +207,8 @@ Summary: Completed successfully in 346s
 Task: stepgen-and-scaling-calibration
 Status: PASSED
 Summary: Completed successfully in 291s
+[hardware-verification-gates - WIP] Completed: Reviewed PLAN/progress/git history and started inspecting existing test/deploy/profile scripts for hardware gate integration. Remaining: implement hardware verification gates, validate, mark PLAN done, and commit.
+[hardware-verification-gates - WIP] Completed: Delegated implementation and received new hardware gate scripts/docs; beginning local review and validation. Remaining: run validations, update PLAN, and commit.
+[hardware-verification-gates - DONE] Completed: Added executable hardware bring-up gate scripts (EtherCAT EK1100+2xEL7031 scan, LinuxCNC hardware config-load check, and low-speed axis enable/jog gate) plus docs/hardware-verification-gates.md expected outputs; validated via bash -n and local script smoke tests (SKIP in sim profile). Remaining: none.
+[hardware-verification-gates - WIP] Completed: Ran bash ralph/test.sh; setup failed in this environment due missing SSH key /Users/joel/.ssh/id_ed25519 (pre-existing environment prerequisite). Remaining: none.
+[hardware-verification-gates - DONE] Completed: Finalized task with PLAN updated to done and validations recorded; ralph/test.sh failure is environment-prerequisite only (missing SSH key), unrelated to new gate scripts. Remaining: none.
