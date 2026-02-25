@@ -85,7 +85,7 @@
 - ✅ **hardware-test-doc** — `docs/hardware-test.md`
   - *Depends on:* loop-script
   - *Instructions:* Write step-by-step hardware test procedure: pre-flight checklist (wiring, power, EtherCAT chain), switch to hardware profile, EtherCAT bus scan (`ethercat slaves`), single-axis commissioning (enable one axis, jog slowly), full machine test, troubleshooting.
-- ⬜ **configuration-guide-doc** — `docs/configuration-guide.md`
+- ✅ **configuration-guide-doc** — `docs/configuration-guide.md`
   - *Depends on:* config-profiles
   - *Instructions:* Document how to: add/remove axes (edit profile + templates), change drive types (new profile), adjust tuning (velocity, acceleration, ferror), create new profiles.
 - ⬜ **adding-ethercat-doc** — `docs/adding-ethercat.md`
@@ -133,3 +133,5 @@
 - `2026-02-25T22:35:56Z` **test-axis-limits** → ✅ done — Completed in iteration 13 (142s)
 - `2026-02-25T22:35:58Z` **hardware-test-doc** → 🔄 in-progress — Starting iteration 14
 - `2026-02-25T22:38:08Z` **hardware-test-doc** → ✅ done — Completed in iteration 14 (130s)
+- `2026-02-25T22:38:10Z` **configuration-guide-doc** → 🔄 in-progress — Starting iteration 15
+- \ **configuration-guide-doc** → ✅ done — Completed in iteration 15
