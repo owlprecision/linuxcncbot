@@ -28,7 +28,7 @@
 - ✅ **vm-control-script** — `scripts/vm-control.sh` — VM lifecycle management
   - *Depends on:* create-vm-script
   - *Instructions:* Create script with subcommands: `start` (boot VM background, SSH forwarding), `stop` (graceful shutdown then kill), `ssh` (open session), `snapshot <name>` (QEMU snapshot), `restore <name>`, `status` (check running). Store PID in vm/qemu.pid.
-- ⬜ **bootstrap-script** — `scripts/bootstrap.sh` — master orchestrator
+- ✅ **bootstrap-script** — `scripts/bootstrap.sh` — master orchestrator
   - *Depends on:* install-qemu-script, fetch-deps-script, create-vm-script, provision-vm-script, vm-control-script
   - *Instructions:* Run all bootstrap scripts in order, take a "clean" snapshot at the end. Should be idempotent (skip completed steps).
 
@@ -103,3 +103,4 @@
 - `2026-02-25T21:30:46Z` **provision-vm-script** → ✅ done — Completed in iteration 1 (112s)
 - `2026-02-25T21:36:35Z` **vm-control-script** → 🔄 in-progress — Starting iteration 1
 - `2026-02-25T21:38:17Z` **vm-control-script** → ✅ done — Completed in iteration 1 (101s)
+- `2026-02-25T21:56:35Z` **bootstrap-script** → 🔄 in-progress — Starting iteration 1

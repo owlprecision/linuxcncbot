@@ -30,3 +30,7 @@ Summary: Completed successfully in 112s
 Task: vm-control-script
 Status: PASSED
 Summary: Completed successfully in 101s
+[bootstrap-script - WIP] Completed: Reviewed task context and existing bootstrap component scripts. Remaining: implement scripts/bootstrap.sh and validate.
+[bootstrap-script - WIP] Completed: Implemented scripts/bootstrap.sh master orchestrator with idempotent step skipping and clean snapshot flow. Remaining: final validation/reporting.
+[bootstrap-script - WIP] Completed: Validated bootstrap.sh syntax/help/dry-run and executable bit. Remaining: mark PLAN done, commit, and finalize.
+[bootstrap-script - DONE] Completed: Implemented scripts/bootstrap.sh orchestrator, marked PLAN task complete, and validated syntax. Remaining: none.
