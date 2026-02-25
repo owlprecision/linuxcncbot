@@ -102,7 +102,7 @@
   - *Goal:* lock EtherCAT to the dedicated secondary Ethernet card.
   - *Deliverables:* script + docs to identify interface by MAC, set static config, and prevent NetworkManager interference for that NIC.
 
-- ⬜ **igh-master-runtime-setup** — configure EtherCAT master runtime for hardware
+- ✅ **igh-master-runtime-setup** — configure EtherCAT master runtime for hardware
   - *Goal:* ensure IgH EtherCAT master starts consistently on boot and binds the right NIC.
   - *Deliverables:* configuration + verification steps (`ethercat master`, `ethercat slaves`) captured in scripts/docs.
 
@@ -182,3 +182,4 @@
 - `2026-02-25T23:20:10Z` **target-host-bootstrap** → ✅ done — Completed in iteration 1 (206s)
 - `2026-02-25T23:20:12Z` **ethercat-nic-setup** → 🔄 in-progress — Starting iteration 2
 - `2026-02-25T23:23:07Z` **ethercat-nic-setup** → ✅ done — Completed in iteration 2 (175s)
+- `2026-02-25T23:23:09Z` **igh-master-runtime-setup** → 🔄 in-progress — Starting iteration 3
