@@ -178,3 +178,8 @@ Summary: Completed successfully in 206s
 [ethercat-nic-setup - WIP] Completed: Reviewed PLAN/progress/recent commits and existing host bootstrap/doc conventions for NIC setup implementation. Remaining: implement NIC setup script and docs, validate, update PLAN, and commit.
 [ethercat-nic-setup - WIP] Completed: Added scripts/ethercat-nic-setup.sh and docs/ethercat-nic-setup.md with MAC-based NIC resolution, static IP parameters, and NetworkManager unmanaged handling; validated syntax/help and executable bit. Remaining: mark PLAN done and commit.
 [ethercat-nic-setup - DONE] Completed: Added executable scripts/ethercat-nic-setup.sh for MAC-based NIC binding with static IPv4 configuration and NetworkManager unmanaged protection, documented workflow in docs/ethercat-nic-setup.md, validated via bash -n and --help, and marked PLAN task complete. Remaining: none.
+
+--- iteration 2 (2026-02-25T23:23:07Z) ---
+Task: ethercat-nic-setup
+Status: PASSED
+Summary: Completed successfully in 175s
