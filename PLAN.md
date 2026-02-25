@@ -129,7 +129,7 @@
   - *Goal:* if his current machine setup is messy, provide clean re-entry.
   - *Deliverables:* explicit backup/restore steps for old configs and a clean migration path to this repo-managed setup.
 
-- ⬜ **handoff-readiness-checklist** — provide final “send him the URL” checklist
+- ✅ **handoff-readiness-checklist** — provide final “send him the URL” checklist
   - *Goal:* ensure repo is truly self-service before handoff.
   - *Checklist:* scripts executable, docs current, profile present, verification passing, rollback documented.
 
@@ -194,3 +194,4 @@
 - `2026-02-25T23:42:49Z` **one-command-handoff-flow** → ✅ done — Completed in iteration 7 (92s)
 - `2026-02-25T23:42:51Z` **restart-safe-migration-path** → 🔄 in-progress — Starting iteration 8
 - `2026-02-25T23:45:49Z` **restart-safe-migration-path** → ✅ done — Completed in iteration 8 (178s)
+- `2026-02-25T23:45:52Z` **handoff-readiness-checklist** → 🔄 in-progress — Starting iteration 9

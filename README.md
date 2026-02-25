@@ -122,6 +122,28 @@ sudo systemctl status ethercat --no-pager
 
 If rollback is required because deployment failed, keep the repo checkout and backup directory; they help you diff old vs. new configs before retrying.
 
+## Handoff readiness checklist (send-him-the-URL gate)
+
+Before handoff, confirm all of the following on the target host:
+
+- [ ] Scripts are executable:
+  ```bash
+  chmod +x scripts/bootstrap-target-host.sh scripts/ethercat-nic-setup.sh scripts/igh-master-runtime-setup.sh ralph/configure.sh ralph/deploy.sh ralph/verify.sh
+  test -x scripts/bootstrap-target-host.sh -a -x scripts/ethercat-nic-setup.sh -a -x scripts/igh-master-runtime-setup.sh -a -x ralph/configure.sh -a -x ralph/deploy.sh -a -x ralph/verify.sh
+  ```
+- [ ] Docs are current for the exact steps used (especially this README handoff flow and rollback section).
+- [ ] Beckhoff profile is present and activatable:
+  ```bash
+  test -f config/profiles/beckhoff-ek1100-2x-el7031.env
+  printf '%s\n' 'beckhoff-ek1100-2x-el7031.env' > config/profiles/active
+  cat config/profiles/active
+  ```
+- [ ] Verification command passes with expected criteria (`PASS` test summary and no HAL verification failures):
+  ```bash
+  VM_SSH_HOST=localhost VM_SSH_PORT=22 VM_SSH_USER="$USER" VM_SSH_KEY="$HOME/.ssh/id_ed25519" ./ralph/verify.sh
+  ```
+- [ ] Rollback path is documented and tested for your machine (`Start over safely` → `3) Roll back safely to pre-migration state`, including a recorded `BACKUP_ROOT`).
+
 ## What is the Ralph Loop?
 
 The ralph loop is an outer shell that wraps GitHub Copilot CLI and re-invokes it repeatedly with fresh context until all tasks are done:
