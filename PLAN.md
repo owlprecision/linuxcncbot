@@ -52,7 +52,7 @@
 - ✅ **configure-script** — `ralph/configure.sh` — generate configs from profile
   - *Depends on:* machine-ini, machine-hal, sim-hal, config-profiles
   - *Instructions:* Read active profile .env, use envsubst to expand templates into build/ directory, validate INI syntax (check required sections exist), output JSON manifest of generated files.
-- ⬜ **deploy-script** — `ralph/deploy.sh` — push config to VM
+- ✅ **deploy-script** — `ralph/deploy.sh` — push config to VM
   - *Depends on:* vm-control-script, configure-script
   - *Instructions:* Rsync build/ contents to VM via SSH (port 2222), compile any .comp files with halcompile, output JSON status with file list and any errors.
 - ⬜ **test-script** — `ralph/test.sh` — run tests in VM
@@ -115,3 +115,4 @@
 - `2026-02-25T22:11:55Z` **ethercat-conf-template** → ✅ done — Completed in iteration 4 (166s)
 - `2026-02-25T22:11:57Z` **configure-script** → 🔄 in-progress — Starting iteration 5
 - `2026-02-25T22:14:22Z` **configure-script** → ✅ done — Completed in iteration 5 (145s)
+- `2026-02-25T22:14:24Z` **deploy-script** → 🔄 in-progress — Starting iteration 6

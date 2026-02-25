@@ -83,3 +83,6 @@ Summary: Completed successfully in 166s
 Task: configure-script
 Status: PASSED
 Summary: Completed successfully in 145s
+[deploy-script - WIP] Completed: Reviewed PLAN, recent commits, and configure/vm-control scripts; drafted implementation approach for deploy.sh. Remaining: implement script, validate, update PLAN, and commit.
+[deploy-script - WIP] Completed: Implemented ralph/deploy.sh with profile loading, SSH defaults, rsync upload, remote .comp halcompile, and JSON status output. Remaining: validate syntax and runtime failure mode.
+[deploy-script - DONE] Completed: Validated deploy.sh with bash -n and expected failure-mode execution while preserving JSON output and non-zero exit on failure. Remaining: none.
