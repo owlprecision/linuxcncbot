@@ -55,7 +55,7 @@
 - ✅ **deploy-script** — `ralph/deploy.sh` — push config to VM
   - *Depends on:* vm-control-script, configure-script
   - *Instructions:* Rsync build/ contents to VM via SSH (port 2222), compile any .comp files with halcompile, output JSON status with file list and any errors.
-- ⬜ **test-script** — `ralph/test.sh` — run tests in VM
+- ✅ **test-script** — `ralph/test.sh` — run tests in VM
   - *Depends on:* deploy-script, test-config-loads, test-hal-pins, test-gcode-basic, test-axis-limits
   - *Instructions:* SSH into VM, run each test from tests/ directory, capture exit codes and output, produce JSON results array with test name, status (pass/fail), and output.
 - ⬜ **verify-script** — `ralph/verify.sh` — the verification lynchpin
@@ -117,3 +117,4 @@
 - `2026-02-25T22:14:22Z` **configure-script** → ✅ done — Completed in iteration 5 (145s)
 - `2026-02-25T22:14:24Z` **deploy-script** → 🔄 in-progress — Starting iteration 6
 - `2026-02-25T22:16:58Z` **deploy-script** → ✅ done — Completed in iteration 6 (154s)
+- `2026-02-25T22:17:00Z` **test-script** → 🔄 in-progress — Starting iteration 7
