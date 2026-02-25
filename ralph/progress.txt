@@ -98,3 +98,6 @@ Summary: Completed successfully in 154s
 Task: test-script
 Status: PASSED
 Summary: Completed successfully in 126s
+[verify-script - WIP] Completed: Reviewed PLAN/progress/history and prepared implementation plan for ralph/verify.sh. Remaining: implement script, validate behavior, update PLAN, and commit.
+[verify-script - WIP] Completed: Implemented ralph/verify.sh to run test.sh, collect HAL pin dump, and emit machine-readable verification JSON. Remaining: validate syntax/runtime behavior and finalize.
+[verify-script - DONE] Completed: Validated verify.sh syntax and failure-path execution (JSON emitted with non-zero exit when tests fail). Remaining: none.

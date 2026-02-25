@@ -58,7 +58,7 @@
 - ✅ **test-script** — `ralph/test.sh` — run tests in VM
   - *Depends on:* deploy-script, test-config-loads, test-hal-pins, test-gcode-basic, test-axis-limits
   - *Instructions:* SSH into VM, run each test from tests/ directory, capture exit codes and output, produce JSON results array with test name, status (pass/fail), and output.
-- ⬜ **verify-script** — `ralph/verify.sh` — the verification lynchpin
+- ✅ **verify-script** — `ralph/verify.sh` — the verification lynchpin
   - *Depends on:* test-script
   - *Instructions:* Run test.sh, parse JSON, generate structured report: overall PASS/FAIL, per-test details, HAL pin dump, log excerpts, suggested fixes. Exit 0 if all pass, non-zero otherwise.
 - ⬜ **loop-script** — `ralph/loop.sh` — main ralph loop entry point
@@ -119,3 +119,4 @@
 - `2026-02-25T22:16:58Z` **deploy-script** → ✅ done — Completed in iteration 6 (154s)
 - `2026-02-25T22:17:00Z` **test-script** → 🔄 in-progress — Starting iteration 7
 - `2026-02-25T22:19:06Z` **test-script** → ✅ done — Completed in iteration 7 (126s)
+- `2026-02-25T22:19:08Z` **verify-script** → 🔄 in-progress — Starting iteration 8
