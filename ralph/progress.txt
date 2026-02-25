@@ -106,3 +106,5 @@ Summary: Completed successfully in 126s
 Task: verify-script
 Status: PASSED
 Summary: Completed successfully in 205s
+[loop-script - WIP] Completed: Delegated loop.sh implementation and started local validation. Remaining: run checks, update PLAN, and commit.
+[loop-script - DONE] Completed: Implemented ralph/loop.sh subcommands next/status/verify/run with structured JSON output, validated syntax and next/status smoke tests, marked PLAN task complete. Remaining: none.

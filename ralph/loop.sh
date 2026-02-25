@@ -1,531 +1,302 @@
 #!/usr/bin/env bash
-# Ralph Loop — autonomous AI coding agent orchestrator
-#
-# Repeatedly invokes GitHub Copilot CLI with fresh context, reading PLAN.md
-# to find the next task, executing it, and checking for a completion signal.
-# Each iteration gets a fresh context window. State persists via files + git.
-#
-# Usage:
-#   ./ralph/loop.sh              # Run until done or Ctrl+C (unlimited)
-#   ./ralph/loop.sh 1            # Run exactly 1 step
-#   ./ralph/loop.sh 5            # Run up to 5 steps
-#   ./ralph/loop.sh --status     # Show plan status
-#   ./ralph/loop.sh --next       # Show next task (no execution)
-#   ./ralph/loop.sh --dry-run    # Preview prompt without invoking copilot
-#   ./ralph/loop.sh --model X    # Use specific AI model
-#   ./ralph/loop.sh --quiet-copilot # Hide live copilot output
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 PLAN_FILE="$REPO_ROOT/PLAN.md"
-PROGRESS_FILE="$REPO_ROOT/ralph/progress.txt"
-PROMPT_FILE="$SCRIPT_DIR/PROMPT_build.md"
-AGENTS_DIR="$REPO_ROOT/.github/agents"
-COMPLETE_SIGNAL='<promise>COMPLETE</promise>'
+VERIFY_SCRIPT="$SCRIPT_DIR/verify.sh"
+UPDATE_PLAN_SCRIPT="$SCRIPT_DIR/update-plan.sh"
+COMMIT_SCRIPT="$SCRIPT_DIR/commit.sh"
 
-# Defaults — 0 means unlimited (run until done or Ctrl+C)
-MAX_ITERATIONS=0
-MODEL=""
-DRY_RUN=false
-MODE="run"
-SHOW_COPILOT_OUTPUT=true
-
-# Caffeinate PID (to clean up on exit)
-CAFFEINATE_PID=""
-
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-CYAN='\033[0;36m'
-GRAY='\033[0;90m'
-WHITE='\033[1;37m'
-NC='\033[0m'
-
-# ═══════════════════════════════════════════════════════════════
-#                     ARGUMENT PARSING
-# ═══════════════════════════════════════════════════════════════
-
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        --status)    MODE="status"; shift ;;
-        --next)      MODE="next"; shift ;;
-        --dry-run)   DRY_RUN=true; shift ;;
-        --model)     MODEL="$2"; shift 2 ;;
-        --quiet-copilot) SHOW_COPILOT_OUTPUT=false; shift ;;
-        -h|--help)   MODE="help"; shift ;;
-        [0-9]*)      MAX_ITERATIONS="$1"; shift ;;
-        *)           echo "Unknown option: $1"; exit 1 ;;
-    esac
-done
-
-# ═══════════════════════════════════════════════════════════════
-#                     CAFFEINATE & CLEANUP
-# ═══════════════════════════════════════════════════════════════
-
-start_caffeinate() {
-    # Prevent macOS sleep while loop runs (display can sleep, system stays awake)
-    if command -v caffeinate &>/dev/null; then
-        caffeinate -s &
-        CAFFEINATE_PID=$!
-        echo -e "  ${GRAY}caffeinate started (PID $CAFFEINATE_PID) — system won't sleep${NC}"
-    fi
+json_escape() {
+  local s="${1:-}"
+  s=${s//\\/\\\\}
+  s=${s//\"/\\\"}
+  s=${s//$'\n'/\\n}
+  s=${s//$'\r'/\\r}
+  s=${s//$'\t'/\\t}
+  printf '%s' "$s"
 }
 
-stop_caffeinate() {
-    if [[ -n "$CAFFEINATE_PID" ]] && kill -0 "$CAFFEINATE_PID" 2>/dev/null; then
-        kill "$CAFFEINATE_PID" 2>/dev/null || true
-        wait "$CAFFEINATE_PID" 2>/dev/null || true
-        CAFFEINATE_PID=""
-    fi
-}
+json_array_from_lines() {
+  local input="${1:-}"
+  local out=""
+  local first=true
 
-cleanup() {
-    local exit_code=$?
-    stop_caffeinate
-    # Log interruption if we were mid-iteration
-    if [[ -n "${CURRENT_TASK_ID:-}" ]]; then
-        local ts
-        ts=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-        cat >> "$PROGRESS_FILE" <<EOF
-
---- interrupted ($ts) ---
-Task: ${CURRENT_TASK_ID}
-Status: INTERRUPTED
-Summary: Loop stopped (signal/Ctrl+C). Task left as 🔄 in-progress. Re-run to resume.
-EOF
-        echo ""
-        echo -e "${YELLOW}  Interrupted during task: ${CURRENT_TASK_ID}${NC}"
-        echo -e "${GRAY}  Task left as 🔄 in-progress in PLAN.md${NC}"
-        echo -e "${GRAY}  Re-run ./ralph/loop.sh to pick up where you left off${NC}"
-
-        # Commit any partial work so nothing is lost
-        "$SCRIPT_DIR/commit.sh" "$CURRENT_TASK_ID" "WIP: $CURRENT_TASK_ID (interrupted)" 2>/dev/null || true
-    fi
-    exit "$exit_code"
-}
-
-trap cleanup EXIT INT TERM
-
-# Track the task currently being worked on (for cleanup handler)
-CURRENT_TASK_ID=""
-
-# ═══════════════════════════════════════════════════════════════
-#                     HELPER FUNCTIONS
-# ═══════════════════════════════════════════════════════════════
-
-show_status() {
-    "$SCRIPT_DIR/update-plan.sh" --status
-}
-
-show_next() {
-    "$SCRIPT_DIR/update-plan.sh" --next
-}
-
-show_help() {
-    cat <<EOF
-Ralph Loop — autonomous AI coding agent orchestrator for LinuxCNC Bot
-
-Repeatedly invokes GitHub Copilot CLI to work through tasks in PLAN.md.
-Each iteration gets a fresh context window. State persists via PLAN.md,
-progress.txt, and git commits.
-
-Usage:
-  ./ralph/loop.sh              Run until all tasks done or Ctrl+C
-  ./ralph/loop.sh 1            Run exactly 1 step (good for limited time)
-  ./ralph/loop.sh 5            Run up to 5 steps
-  ./ralph/loop.sh --status     Show plan status (no execution)
-  ./ralph/loop.sh --next       Show next task (no execution)
-  ./ralph/loop.sh --dry-run    Preview what would be sent to copilot
-  ./ralph/loop.sh --model X    Use specific AI model (e.g., claude-sonnet-4)
-  ./ralph/loop.sh --quiet-copilot  Hide live copilot output (still logged)
-
-The loop:
-  1. Reads PLAN.md for the next ⬜ (or 🔄 interrupted) task
-  2. Provides available custom agents from .github/agents/ in the prompt
-  3. Invokes 'copilot -p <prompt>' and lets AI choose/delegate subagents
-  4. Checks output for completion signal: ${COMPLETE_SIGNAL}
-  5. Logs results to ralph/progress.txt
-  6. Commits changes to git
-  7. Repeats until all tasks pass or limit reached
-
-Interruption & resume:
-  - Ctrl+C at any time safely stops the loop
-  - Partial work is committed, task stays as 🔄 in-progress
-  - Re-run ./ralph/loop.sh to pick up where you left off
-  - macOS sleep is prevented via caffeinate (display can sleep)
-
-EOF
-    exit 0
-}
-
-ensure_progress_file() {
-    if [[ ! -f "$PROGRESS_FILE" ]]; then
-        cat > "$PROGRESS_FILE" <<'EOF'
-# Ralph Loop Progress Log
-# Append-only log of what happened each iteration.
-# The last ~20 lines are fed to copilot as short-term memory.
-EOF
-    fi
-}
-
-get_progress_tail() {
-    if [[ -f "$PROGRESS_FILE" ]]; then
-        tail -20 "$PROGRESS_FILE"
+  while IFS= read -r line; do
+    [[ -z "$line" ]] && continue
+    if [[ "$first" == true ]]; then
+      first=false
     else
-        echo "(no previous progress)"
+      out+=","
     fi
+    out+="\"$(json_escape "$line")\""
+  done <<< "$input"
+
+  printf '[%s]' "$out"
 }
 
-find_next_task() {
-    # First check for any 🔄 in-progress tasks (resume interrupted work)
-    local in_progress
-    in_progress=$(grep -n "^- 🔄 \*\*" "$PLAN_FILE" | head -1) || true
-    if [[ -n "$in_progress" ]]; then
-        echo "$in_progress"
-        return
-    fi
-    # Then find first ⬜ pending task
-    grep -n "^- ⬜ \*\*" "$PLAN_FILE" | head -1
+task_line_to_id() {
+  local task_line="$1"
+  sed -E 's/.*\*\*([^*]+)\*\*.*/\1/' <<< "$task_line"
 }
 
-extract_task_block() {
-    # Given a line number, extract the task and its instruction block
-    local line_num="$1"
-    local task_line
-    task_line=$(sed -n "${line_num}p" "$PLAN_FILE")
+extract_task_block_by_line() {
+  local line_num="$1"
+  local task_line
+  task_line="$(sed -n "${line_num}p" "$PLAN_FILE")"
 
-    # Grab indented lines following the task (instructions, depends-on, etc.)
-    local block=""
-    local next_line=$((line_num + 1))
-    while true; do
-        local l
-        l=$(sed -n "${next_line}p" "$PLAN_FILE") || break
-        # Stop at next task, blank line, or section header
-        if [[ "$l" =~ ^-\ [⬜🔄✅❌] ]] || [[ "$l" =~ ^## ]] || [[ -z "$l" ]]; then
-            break
-        fi
-        block+="$l"$'\n'
-        next_line=$((next_line + 1))
-    done
+  local block_lines=""
+  local next_line=$((line_num + 1))
 
-    echo "$task_line"
-    echo "$block"
-}
+  while true; do
+    local line
+    line="$(sed -n "${next_line}p" "$PLAN_FILE")"
 
-extract_task_id() {
-    # Pull task ID from a task line like: - ⬜ **create-vm-script** — ...
-    echo "$1" | sed 's/.*\*\*\([^*]*\)\*\*.*/\1/'
-}
-
-build_prompt() {
-    local task_block="$1"
-    local progress_tail="$2"
-    local is_resume="$3"
-    local available_agents="$4"
-
-    # Read the build prompt template
-    if [[ -f "$PROMPT_FILE" ]]; then
-        local template
-        template=$(cat "$PROMPT_FILE")
-    else
-        echo "ERROR: Build prompt not found at $PROMPT_FILE" >&2
-        exit 1
+    if [[ -z "$line" ]]; then
+      break
     fi
 
-    local resume_note=""
-    if [[ "$is_resume" == "true" ]]; then
-        resume_note="
-## IMPORTANT: RESUMING INTERRUPTED TASK
-
-This task was previously started but interrupted (marked 🔄 in PLAN.md).
-Check the progress log and git log to see what was already done.
-Continue from where the previous iteration left off — do NOT redo completed work.
-If the task looks already complete, verify it works and mark it done.
-"
+    if [[ "$line" =~ ^-\ [⬜🔄✅❌]\ \*\* ]] || [[ "$line" =~ ^##\  ]]; then
+      break
     fi
 
-    # Inject task and progress into the template
-    local prompt="$template
-${resume_note}
-## AVAILABLE CUSTOM AGENTS
+    block_lines+="$line"$'\n'
+    next_line=$((next_line + 1))
+  done
 
-Choose the most appropriate custom agent(s) from the list below for this task.
-The AI should decide delegation strategy based on task requirements.
-
-${available_agents}
-
-## YOUR ASSIGNED TASK FOR THIS ITERATION
-
-${task_block}
-
-## RECENT PROGRESS (last 20 lines of ralph/progress.txt)
-
-${progress_tail}
-"
-    echo "$prompt"
+  printf '%s\n' "$task_line"
+  printf '%s' "$block_lines"
 }
 
-invoke_copilot() {
-    local prompt="$1"
-    local cli_args=(-p "$prompt" --allow-all-tools --no-ask-user)
-    if [[ -n "$MODEL" ]]; then
-        cli_args+=(--model "$MODEL")
-    fi
-    local tmp_out
-    tmp_out="$(mktemp)"
-    local rc=0
-
-    if [[ "$SHOW_COPILOT_OUTPUT" == "true" ]]; then
-        # Stream copilot output live to stderr while capturing full output for checks/logging.
-        copilot "${cli_args[@]}" 2>&1 | tee "$tmp_out" >&2 || rc=$?
-    else
-        copilot "${cli_args[@]}" >"$tmp_out" 2>&1 || rc=$?
-    fi
-
-    cat "$tmp_out"
-    rm -f "$tmp_out"
-    return "$rc"
+find_first_pending() {
+  grep -n "^- ⬜ \*\*" "$PLAN_FILE" | head -1 || true
 }
 
-list_available_agents() {
-    if [[ ! -d "$AGENTS_DIR" ]]; then
-        echo "- (none found in .github/agents/)"
-        return
-    fi
-    find "$AGENTS_DIR" -maxdepth 1 -name "*.agent.md" -type f | sort | while IFS= read -r f; do
-        local name
-        name="$(basename "$f" .agent.md)"
-        echo "- ${name}"
-    done
-    # Ensure fallback if directory exists but empty
-    if [[ -z "$(find "$AGENTS_DIR" -maxdepth 1 -name "*.agent.md" -type f 2>/dev/null)" ]]; then
-        echo "- (none found in .github/agents/)"
-    fi
+find_first_in_progress() {
+  grep -n "^- 🔄 \*\*" "$PLAN_FILE" | head -1 || true
 }
 
-log_progress() {
-    local iteration="$1"
-    local task_id="$2"
-    local status="$3"
-    local summary="$4"
-    local timestamp
-    timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+build_task_json_by_line() {
+  local line_num="$1"
+  local task_block
+  task_block="$(extract_task_block_by_line "$line_num")"
 
-    cat >> "$PROGRESS_FILE" <<EOF
+  local task_line
+  task_line="$(head -n 1 <<< "$task_block")"
+  local task_id
+  task_id="$(task_line_to_id "$task_line")"
 
---- iteration ${iteration} (${timestamp}) ---
-Task: ${task_id}
-Status: ${status}
-Summary: ${summary}
-EOF
+  local instructions
+  instructions="$(tail -n +2 <<< "$task_block")"
+
+  local instruction_lines_json
+  instruction_lines_json="$(json_array_from_lines "$instructions")"
+
+  printf '{"id":"%s","line":%s,"task_line":"%s","instructions":%s}' \
+    "$(json_escape "$task_id")" \
+    "$line_num" \
+    "$(json_escape "$task_line")" \
+    "$instruction_lines_json"
 }
 
-# ═══════════════════════════════════════════════════════════════
-#                     MODE DISPATCH
-# ═══════════════════════════════════════════════════════════════
+cmd_next() {
+  local next_match
+  next_match="$(find_first_pending)"
 
-case "$MODE" in
-    status) show_status; exit 0 ;;
-    next)   show_next; exit 0 ;;
-    help)   show_help ;;
-esac
+  if [[ -z "$next_match" ]]; then
+    printf '{"command":"next","status":"complete","message":"No pending tasks found","task":null}\n'
+    return 0
+  fi
 
-# ═══════════════════════════════════════════════════════════════
-#                     PRE-FLIGHT CHECKS
-# ═══════════════════════════════════════════════════════════════
+  local line_num
+  line_num="${next_match%%:*}"
+  local task_json
+  task_json="$(build_task_json_by_line "$line_num")"
+  printf '{"command":"next","status":"ok","task":%s}\n' "$task_json"
+}
 
-if ! command -v copilot &>/dev/null; then
-    echo -e "${RED}ERROR: 'copilot' CLI not found.${NC}"
-    echo "Install: npm install -g @github/copilot"
+cmd_status() {
+  local done in_progress pending failed total completed_percent
+  done=$(grep -c "^- ✅" "$PLAN_FILE" || true)
+  in_progress=$(grep -c "^- 🔄" "$PLAN_FILE" || true)
+  pending=$(grep -c "^- ⬜" "$PLAN_FILE" || true)
+  failed=$(grep -c "^- ❌" "$PLAN_FILE" || true)
+
+  done=${done:-0}
+  in_progress=${in_progress:-0}
+  pending=${pending:-0}
+  failed=${failed:-0}
+  total=$((done + in_progress + pending + failed))
+
+  if [[ "$total" -eq 0 ]]; then
+    completed_percent=0
+  else
+    completed_percent=$((done * 100 / total))
+  fi
+
+  printf '{"command":"status","status":"ok","counts":{"done":%s,"in_progress":%s,"pending":%s,"failed":%s,"total":%s},"progress":{"completed":%s,"percent":%s}}\n' \
+    "$done" "$in_progress" "$pending" "$failed" "$total" "$done" "$completed_percent"
+}
+
+get_current_in_progress_task() {
+  local current
+  current="$(find_first_in_progress)"
+  if [[ -z "$current" ]]; then
+    return 1
+  fi
+
+  local line_num task_line task_id
+  line_num="${current%%:*}"
+  task_line="$(sed -n "${line_num}p" "$PLAN_FILE")"
+  task_id="$(task_line_to_id "$task_line")"
+
+  printf '%s\t%s\t%s\n' "$line_num" "$task_id" "$task_line"
+}
+
+mark_first_pending_in_progress() {
+  local next_match
+  next_match="$(find_first_pending)"
+  if [[ -z "$next_match" ]]; then
+    return 1
+  fi
+
+  local line_num task_line task_id
+  line_num="${next_match%%:*}"
+  task_line="$(sed -n "${line_num}p" "$PLAN_FILE")"
+  task_id="$(task_line_to_id "$task_line")"
+
+  "$UPDATE_PLAN_SCRIPT" "$task_id" "in-progress" "Started by ralph/loop.sh run" >/dev/null
+  printf '%s\n' "$task_id"
+}
+
+cmd_verify() {
+  if [[ ! -x "$VERIFY_SCRIPT" ]]; then
+    printf '{"command":"verify","status":"error","message":"ralph/verify.sh not found or not executable"}\n'
+    return 1
+  fi
+
+  local current_info
+  if ! current_info="$(get_current_in_progress_task)"; then
+    printf '{"command":"verify","status":"error","message":"No in-progress task found in PLAN.md"}\n'
+    return 1
+  fi
+
+  local _line_num task_id _task_line
+  _line_num="$(cut -f1 <<< "$current_info")"
+  task_id="$(cut -f2 <<< "$current_info")"
+  _task_line="$(cut -f3- <<< "$current_info")"
+
+  local verify_output verify_rc
+  set +e
+  verify_output="$(bash "$VERIFY_SCRIPT" 2>&1)"
+  verify_rc=$?
+  set -e
+
+  local verify_json_escaped
+  verify_json_escaped="$(json_escape "$verify_output")"
+
+  if [[ "$verify_rc" -eq 0 ]]; then
+    "$UPDATE_PLAN_SCRIPT" "$task_id" "done" "verify passed via ralph/loop.sh" >/dev/null
+    local commit_output
+    commit_output="$(bash "$COMMIT_SCRIPT" "$task_id" "Completed: $task_id (verify passed)" 2>&1 || true)"
+
+    printf '{"command":"verify","status":"pass","task_id":"%s","verify_exit_code":%s,"verify_output":"%s","plan_update":{"status":"done"},"commit":{"output":"%s"}}\n' \
+      "$(json_escape "$task_id")" \
+      "$verify_rc" \
+      "$verify_json_escaped" \
+      "$(json_escape "$commit_output")"
+    return 0
+  fi
+
+  "$UPDATE_PLAN_SCRIPT" "$task_id" "failed" "verify failed via ralph/loop.sh" >/dev/null || true
+  local fail_commit_output
+  fail_commit_output="$(bash "$COMMIT_SCRIPT" "$task_id" "Failed: $task_id (verify failed)" 2>&1 || true)"
+
+  printf '{"command":"verify","status":"fail","task_id":"%s","verify_exit_code":%s,"verify_output":"%s","plan_update":{"status":"failed"},"commit":{"output":"%s"}}\n' \
+    "$(json_escape "$task_id")" \
+    "$verify_rc" \
+    "$verify_json_escaped" \
+    "$(json_escape "$fail_commit_output")"
+  return "$verify_rc"
+}
+
+cmd_run() {
+  local current_info next_json verify_json verify_rc target_line target_task_json target_task_id
+
+  if current_info="$(get_current_in_progress_task)"; then
+    target_line="$(cut -f1 <<< "$current_info")"
+    target_task_id="$(cut -f2 <<< "$current_info")"
+    target_task_json="$(build_task_json_by_line "$target_line")"
+    next_json="{\"command\":\"next\",\"status\":\"ok\",\"task\":${target_task_json}}"
+  else
+    local next_match
+    next_match="$(find_first_pending)"
+    if [[ -z "$next_match" ]]; then
+      printf '{"command":"run","status":"complete","message":"No pending or in-progress tasks found"}\n'
+      return 0
+    fi
+
+    target_line="${next_match%%:*}"
+    target_task_json="$(build_task_json_by_line "$target_line")"
+    target_task_id="$(sed -n "${target_line}p" "$PLAN_FILE" | sed -E 's/.*\*\*([^*]+)\*\*.*/\1/')"
+    next_json="{\"command\":\"next\",\"status\":\"ok\",\"task\":${target_task_json}}"
+    "$UPDATE_PLAN_SCRIPT" "$target_task_id" "in-progress" "Started by ralph/loop.sh run" >/dev/null
+  fi
+
+  set +e
+  verify_json="$(cmd_verify)"
+  verify_rc=$?
+  set -e
+
+  printf '{"command":"run","status":"%s","next":%s,"verify":%s}\n' \
+    "$( [[ "$verify_rc" -eq 0 ]] && echo "pass" || echo "fail" )" \
+    "$next_json" \
+    "$verify_json"
+
+  return "$verify_rc"
+}
+
+usage() {
+  cat <<'__USAGE__'
+Usage: ./ralph/loop.sh <subcommand>
+
+Subcommands:
+  next    Parse PLAN.md and return first pending (⬜) task with instruction block
+  status  Return task counts and progress summary
+  verify  Run ralph/verify.sh, update current in-progress task, and commit
+  run     Execute next + verify + commit flow
+__USAGE__
+}
+
+main() {
+  if [[ ! -f "$PLAN_FILE" ]]; then
+    printf '{"command":"unknown","status":"error","message":"PLAN.md not found"}\n'
     exit 1
-fi
+  fi
 
-if [[ ! -f "$PLAN_FILE" ]]; then
-    echo -e "${RED}ERROR: PLAN.md not found at $PLAN_FILE${NC}"
-    exit 1
-fi
+  local cmd="${1:-}"
+  case "$cmd" in
+    next)
+      cmd_next
+      ;;
+    status)
+      cmd_status
+      ;;
+    verify)
+      cmd_verify
+      ;;
+    run)
+      cmd_run
+      ;;
+    -h|--help|help)
+      usage
+      ;;
+    *)
+      printf '{"command":"unknown","status":"error","message":"Expected subcommand: next|status|verify|run"}\n'
+      exit 1
+      ;;
+  esac
+}
 
-if [[ ! -f "$PROMPT_FILE" ]]; then
-    echo -e "${RED}ERROR: Build prompt not found at $PROMPT_FILE${NC}"
-    echo "Create ralph/PROMPT_build.md first."
-    exit 1
-fi
-
-ensure_progress_file
-
-# ═══════════════════════════════════════════════════════════════
-#                     MAIN LOOP
-# ═══════════════════════════════════════════════════════════════
-
-ITERATION=0
-COMPLETE=false
-SESSION_START=$(date +%s)
-
-# Display iteration limit
-if [[ "$MAX_ITERATIONS" -eq 0 ]]; then
-    LIMIT_DISPLAY="unlimited (Ctrl+C to stop)"
-else
-    LIMIT_DISPLAY="$MAX_ITERATIONS"
-fi
-
-echo ""
-echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
-echo -e "${WHITE}  RALPH LOOP — LinuxCNC Bot${NC}"
-echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
-echo ""
-echo -e "  Max iterations: ${YELLOW}${LIMIT_DISPLAY}${NC}"
-echo -e "  Model:          ${YELLOW}${MODEL:-default}${NC}"
-echo -e "  Plan:           ${GRAY}${PLAN_FILE}${NC}"
-echo -e "  Dry run:        ${YELLOW}${DRY_RUN}${NC}"
-echo -e "  Stream output:  ${YELLOW}${SHOW_COPILOT_OUTPUT}${NC}"
-
-# Start caffeinate for actual runs (not dry-run or status)
-if [[ "$DRY_RUN" != "true" ]]; then
-    start_caffeinate
-fi
-
-echo ""
-show_status
-echo ""
-
-while true; do
-    # Check iteration limit (0 = unlimited)
-    if [[ "$MAX_ITERATIONS" -gt 0 ]] && [[ "$ITERATION" -ge "$MAX_ITERATIONS" ]]; then
-        break
-    fi
-
-    ITERATION=$((ITERATION + 1))
-    TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
-
-    echo ""
-    if [[ "$MAX_ITERATIONS" -gt 0 ]]; then
-        echo -e "${CYAN}═══ [$TIMESTAMP] Iteration $ITERATION / $MAX_ITERATIONS ═══${NC}"
-    else
-        echo -e "${CYAN}═══ [$TIMESTAMP] Iteration $ITERATION ═══${NC}"
-    fi
-
-    # Find next task (prefers 🔄 in-progress over ⬜ pending)
-    next_task_match=$(find_next_task)
-    if [[ -z "$next_task_match" ]]; then
-        echo -e "${GREEN}All tasks complete! Nothing left to do.${NC}"
-        COMPLETE=true
-        break
-    fi
-
-    line_num=$(echo "$next_task_match" | cut -d: -f1)
-    task_block=$(extract_task_block "$line_num")
-    task_first_line=$(echo "$task_block" | head -1)
-    task_id=$(extract_task_id "$task_first_line")
-
-    # Detect if this is a resume of an interrupted task
-    is_resume=false
-    if [[ "$task_first_line" == *"🔄"* ]]; then
-        is_resume=true
-        echo -e "  ${YELLOW}RESUMING:${NC} ${WHITE}${task_id}${NC}"
-    else
-        echo -e "  Task: ${WHITE}${task_id}${NC}"
-    fi
-    echo -e "  ${GRAY}${task_first_line}${NC}"
-
-    # Set current task for cleanup handler
-    CURRENT_TASK_ID="$task_id"
-    echo -e "  Agent strategy: ${WHITE}AI-selected delegation${NC}"
-
-    # Build prompt
-    progress_tail=$(get_progress_tail)
-    available_agents=$(list_available_agents)
-    prompt=$(build_prompt "$task_block" "$progress_tail" "$is_resume" "$available_agents")
-
-    # Dry-run mode: show prompt and exit
-    if [[ "$DRY_RUN" == "true" ]]; then
-        echo ""
-        echo -e "${YELLOW}  DRY RUN — prompt that would be sent:${NC}"
-        echo "────────────────────────────────────────────────────────"
-        echo "$prompt"
-        echo "────────────────────────────────────────────────────────"
-        echo ""
-        echo -e "${GRAY}  (No copilot invocation in dry-run mode)${NC}"
-        CURRENT_TASK_ID=""
-        exit 0
-    fi
-
-    # Mark task as in-progress in PLAN.md (idempotent if already 🔄)
-    "$SCRIPT_DIR/update-plan.sh" "$task_id" "in-progress" "Starting iteration $ITERATION" 2>/dev/null || true
-
-    # Invoke copilot with fresh context
-    echo -e "  ${CYAN}Invoking copilot CLI...${NC}"
-    START_TIME=$(date +%s)
-    OUTPUT=$(invoke_copilot "$prompt")
-    END_TIME=$(date +%s)
-    DURATION=$((END_TIME - START_TIME))
-
-    echo -e "  ${GRAY}Copilot finished in ${DURATION}s${NC}"
-
-    # Check for completion signal
-    if echo "$OUTPUT" | grep -q "$COMPLETE_SIGNAL"; then
-        echo -e "  ${GREEN}✓ Task completed (completion signal received)${NC}"
-
-        # Update plan and log
-        "$SCRIPT_DIR/update-plan.sh" "$task_id" "done" "Completed in iteration $ITERATION (${DURATION}s)" 2>/dev/null || true
-        log_progress "$ITERATION" "$task_id" "PASSED" "Completed successfully in ${DURATION}s"
-
-        # Commit changes
-        "$SCRIPT_DIR/commit.sh" "$task_id" "Completed: $task_id" 2>/dev/null || true
-
-    else
-        echo -e "  ${YELLOW}⚠ No completion signal. Task may need more work.${NC}"
-
-        # Log what happened (last 5 lines of output as summary)
-        summary=$(echo "$OUTPUT" | tail -5 | tr '\n' ' ')
-        log_progress "$ITERATION" "$task_id" "INCOMPLETE" "$summary"
-
-        # Still commit any partial work
-        "$SCRIPT_DIR/commit.sh" "$task_id" "WIP: $task_id (iteration $ITERATION)" 2>/dev/null || true
-    fi
-
-    # Clear current task (no longer mid-task for cleanup handler)
-    CURRENT_TASK_ID=""
-
-    # Brief pause between iterations
-    sleep 2
-done
-
-# ═══════════════════════════════════════════════════════════════
-#                     SESSION SUMMARY
-# ═══════════════════════════════════════════════════════════════
-
-# Clear task ID so cleanup handler doesn't log a false interruption
-CURRENT_TASK_ID=""
-
-SESSION_END=$(date +%s)
-TOTAL_DURATION=$((SESSION_END - SESSION_START))
-
-echo ""
-echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
-echo -e "${WHITE}  SESSION COMPLETE${NC}"
-echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
-echo ""
-echo -e "  Iterations: ${YELLOW}${ITERATION}${NC}"
-echo -e "  Duration:   ${YELLOW}$((TOTAL_DURATION / 60))m $((TOTAL_DURATION % 60))s${NC}"
-echo ""
-
-show_status
-
-if [[ "$COMPLETE" == "true" ]]; then
-    echo ""
-    echo -e "  ${GREEN}✓ ALL TASKS COMPLETED${NC}"
-    exit 0
-else
-    echo ""
-    if [[ "$MAX_ITERATIONS" -gt 0 ]] && [[ "$ITERATION" -ge "$MAX_ITERATIONS" ]]; then
-        echo -e "  ${GREEN}✓ Requested step limit completed successfully.${NC}"
-        echo -e "  ${GRAY}  More tasks remain. Re-run to continue.${NC}"
-        echo -e "  ${GRAY}  State preserved in PLAN.md and ralph/progress.txt${NC}"
-        exit 0
-    fi
-    echo -e "  ${YELLOW}◐ Loop stopped before completion.${NC}"
-    echo -e "  ${GRAY}  State preserved in PLAN.md and ralph/progress.txt${NC}"
-    exit 1
-fi
+main "$@"

@@ -61,7 +61,7 @@
 - ✅ **verify-script** — `ralph/verify.sh` — the verification lynchpin
   - *Depends on:* test-script
   - *Instructions:* Run test.sh, parse JSON, generate structured report: overall PASS/FAIL, per-test details, HAL pin dump, log excerpts, suggested fixes. Exit 0 if all pass, non-zero otherwise.
-- ⬜ **loop-script** — `ralph/loop.sh` — main ralph loop entry point
+- ✅ **loop-script** — `ralph/loop.sh` — main ralph loop entry point
   - *Depends on:* configure-script, deploy-script, test-script, verify-script, update-plan-script, commit-script
   - *Instructions:* Commands: `next` (parse PLAN.md, find first ⬜ task, output its instructions), `status` (summary of all tasks), `verify` (run verify.sh + update PLAN.md + commit), `run` (execute next + verify + commit). All output is structured for Copilot CLI consumption.
 
@@ -121,3 +121,4 @@
 - `2026-02-25T22:19:06Z` **test-script** → ✅ done — Completed in iteration 7 (126s)
 - `2026-02-25T22:19:08Z` **verify-script** → 🔄 in-progress — Starting iteration 8
 - `2026-02-25T22:22:33Z` **verify-script** → ✅ done — Completed in iteration 8 (205s)
+- `2026-02-25T22:26:13Z` **loop-script** → ✅ done — Completed loop command implementation
