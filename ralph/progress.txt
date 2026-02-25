@@ -131,3 +131,8 @@ Summary: Completed successfully in 146s
 [test-gcode-basic - WIP] Completed: Reviewed task context and drafted implementation plan for tests/test-gcode-basic.sh. Remaining: implement script, validate, update PLAN, and commit.
 [test-gcode-basic - WIP] Completed: Implemented tests/test-gcode-basic.sh with configure fallback, prerequisite checks, and LinuxCNC batch-run log validation. Remaining: run syntax/runtime validations and finalize.
 [test-gcode-basic - DONE] Completed: Ran bash -n and executed tests/test-gcode-basic.sh once to confirm expected behavior in this environment; task implementation finalized. Remaining: none.
+
+--- iteration 12 (2026-02-25T22:33:31Z) ---
+Task: test-gcode-basic
+Status: PASSED
+Summary: Completed successfully in 136s
