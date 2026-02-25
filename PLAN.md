@@ -88,7 +88,7 @@
 - ✅ **configuration-guide-doc** — `docs/configuration-guide.md`
   - *Depends on:* config-profiles
   - *Instructions:* Document how to: add/remove axes (edit profile + templates), change drive types (new profile), adjust tuning (velocity, acceleration, ferror), create new profiles.
-- ⬜ **adding-ethercat-doc** — `docs/adding-ethercat.md`
+- ✅ **adding-ethercat-doc** — `docs/adding-ethercat.md`
   - *Depends on:* ethercat-conf-template
   - *Instructions:* Document phase 2 setup: IgH EtherCAT master simulation mode, virtual network interfaces, testing with virtual EtherCAT bus, transitioning from sim to virtual EtherCAT.
 
@@ -136,3 +136,4 @@
 - `2026-02-25T22:38:10Z` **configuration-guide-doc** → 🔄 in-progress — Starting iteration 15
 - `2026-02-25T22:39:50Z` **configuration-guide-doc** → ✅ done — Completed in iteration 15
 - `2026-02-25T22:40:13Z` **configuration-guide-doc** → ✅ done — Completed in iteration 15 (123s)
+- `2026-02-25T22:40:15Z` **adding-ethercat-doc** → 🔄 in-progress — Starting iteration 16

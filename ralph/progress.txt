@@ -159,3 +159,6 @@ Summary: Completed successfully in 130s
 Task: configuration-guide-doc
 Status: PASSED
 Summary: Completed successfully in 123s
+[adding-ethercat-doc - WIP] Completed: Reviewed PLAN/progress/recent commits and gathered profile/template context for EtherCAT documentation. Remaining: draft docs/adding-ethercat.md, validate, update PLAN, and commit.
+[adding-ethercat-doc - WIP] Completed: Drafted docs/adding-ethercat.md covering IgH master virtual mode, virtual NIC setup, virtual bus validation, and sim-to-virtual EtherCAT transition steps. Remaining: final validation, mark PLAN done, and commit.
+[adding-ethercat-doc - DONE] Completed: Authored docs/adding-ethercat.md with phase-2 EtherCAT setup guidance (IgH simulation mode, virtual interfaces, virtual bus testing, transition workflow), validated references to profiles/scripts, and marked PLAN task complete. Remaining: none.
