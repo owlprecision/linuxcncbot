@@ -8,62 +8,54 @@ An iterative development workspace for configuring and testing a LinuxCNC instal
 # 1. Bootstrap the environment (installs QEMU, downloads deps, creates VM)
 ./scripts/bootstrap.sh
 
-# 2. Start a Copilot CLI session and run the ralph loop
-#    In this repo directory, start GitHub Copilot CLI and say:
-#
-#    "Read PLAN.md and execute the next pending task. After completing it,
-#     run ./ralph/loop.sh verify to validate, then update PLAN.md and commit."
+# 2. Run the ralph loop — it invokes Copilot CLI autonomously
+./ralph/loop.sh            # Default: 20 iterations max
+./ralph/loop.sh 50         # Or set a custom limit
+./ralph/loop.sh --dry-run  # Preview what would happen (no API calls)
 ```
+
+The loop runs unattended, invoking `copilot` CLI repeatedly until all tasks in PLAN.md are done or the iteration limit is reached. Re-run to continue where it left off.
 
 ## What is the Ralph Loop?
 
-The ralph loop is an iterative development cycle driven by GitHub Copilot CLI:
+The ralph loop is an outer shell that wraps GitHub Copilot CLI and re-invokes it repeatedly with fresh context until all tasks are done:
 
 ```
-┌─────────────────────────────────────────────────┐
-│                  PLAN.md                         │
-│  (living task queue with ⬜/🔄/✅/❌ statuses)  │
-└──────────┬──────────────────────────▲────────────┘
-           │ read next task           │ update status
-           ▼                          │ + commit
-┌──────────────────┐    ┌─────────────┴────────────┐
-│  Copilot CLI      │───▶│  ralph/loop.sh verify    │
-│  executes task    │    │  (test + verify + commit) │
-└──────────────────┘    └──────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│  ralph/loop.sh  (outer shell — bash while loop)             │
+│                                                             │
+│  while tasks remain and iterations < max:                   │
+│    1. Read PLAN.md → find next ⬜ task                      │
+│    2. Build prompt (task + progress.txt tail)                │
+│    3. copilot -p <prompt> --allow-all-tools                 │
+│    4. Check output for <promise>COMPLETE</promise>          │
+│    5. Log to progress.txt, commit to git                    │
+│    6. Repeat with fresh context                             │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-1. **PLAN.md** is the project's living task queue. Each task has a status, dependencies, and detailed instructions.
-2. **Each Copilot CLI session** reads PLAN.md, picks the next pending task, executes it, then runs verification.
-3. **Every iteration commits to git** — each session's work is a discrete, revertable unit. If something breaks, `git log` shows what each iteration did and `git revert` can undo it.
-4. **Sessions are stateless** — any session can pick up where the last left off by reading PLAN.md.
+Key design principles:
+1. **PLAN.md** is the living task queue — each task has status (⬜/🔄/✅/❌) and detailed instructions.
+2. **Fresh context each iteration** — copilot is invoked as a new process each time, avoiding context drift.
+3. **Disk as memory** — `ralph/progress.txt` is an append-only log. The last 20 lines are fed to copilot as short-term memory across context resets.
+4. **Git as checkpoint** — every iteration commits, so every session's work is a discrete, revertable unit.
+5. **External completion check** — the loop (not the AI) decides when a task is done, by checking for the `<promise>COMPLETE</promise>` signal.
 
-## How to Run an Iteration
-
-### Option 1: Let Copilot CLI drive (recommended)
-
-Start Copilot CLI in this directory and say:
-> "Read PLAN.md and execute the next pending task."
-
-After it completes the work:
-> "Run `./ralph/loop.sh verify` to validate and commit."
-
-### Option 2: Manual ralph loop commands
+## How to Run
 
 ```bash
-./ralph/loop.sh next      # Show the next pending task and instructions
-./ralph/loop.sh status    # Show status of all tasks
-./ralph/loop.sh verify    # Run verification on current state + commit
+# Run the autonomous loop (invokes copilot CLI repeatedly)
+./ralph/loop.sh              # Default: 20 iterations
+./ralph/loop.sh 50           # Custom iteration limit
+./ralph/loop.sh --model claude-opus-4.6  # Use a specific model
+./ralph/loop.sh --dry-run    # Preview prompt, no API calls
+
+# Status and inspection (no copilot invocation)
+./ralph/loop.sh --status     # Show task summary
+./ralph/loop.sh --next       # Show next pending task
 ```
 
-### Option 3: Run specific scripts directly
-
-```bash
-./ralph/configure.sh              # Generate configs from active profile
-./ralph/deploy.sh                 # Push config to VM
-./ralph/test.sh                   # Run test suite in VM
-./ralph/verify.sh                 # Full verification report
-./ralph/commit.sh "description"   # Commit current changes
-```
+Re-run `./ralph/loop.sh` to continue where the last run left off. All state is in PLAN.md and `ralph/progress.txt`.
 
 ## Architecture
 

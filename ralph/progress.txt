@@ -1,0 +1,7 @@
+# Ralph Loop Progress Log
+# Append-only log of what happened each iteration.
+# The last ~20 lines are fed to copilot as short-term memory.
+
+--- session start ---
+Bootstrap complete. PLAN.md, README.md, scripts, config profiles, and ralph loop created.
+Next: create-vm-script (QEMU VM creation)

@@ -1,144 +1,359 @@
 #!/usr/bin/env bash
-# Ralph Loop — main entry point
-# Reads PLAN.md to determine next task, runs verification, commits changes
+# Ralph Loop — autonomous AI coding agent orchestrator
+#
+# Repeatedly invokes GitHub Copilot CLI with fresh context, reading PLAN.md
+# to find the next task, executing it, and checking for a completion signal.
+# Each iteration gets a fresh context window. State persists via files + git.
+#
+# Usage:
+#   ./ralph/loop.sh              # Run loop (default: 20 iterations max)
+#   ./ralph/loop.sh 10           # Run with custom iteration limit
+#   ./ralph/loop.sh --status     # Show plan status
+#   ./ralph/loop.sh --next       # Show next task (no execution)
+#   ./ralph/loop.sh --dry-run    # Preview prompt without invoking copilot
+#   ./ralph/loop.sh --model X    # Use specific AI model
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 PLAN_FILE="$REPO_ROOT/PLAN.md"
+PROGRESS_FILE="$REPO_ROOT/ralph/progress.txt"
+PROMPT_FILE="$SCRIPT_DIR/PROMPT_build.md"
+COMPLETE_SIGNAL='<promise>COMPLETE</promise>'
 
-usage() {
-    cat <<EOF
-Ralph Loop — iterative LinuxCNC configuration and testing
+# Defaults
+MAX_ITERATIONS=20
+MODEL=""
+DRY_RUN=false
+MODE="run"
 
-Usage: $0 <command>
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+GRAY='\033[0;90m'
+WHITE='\033[1;37m'
+NC='\033[0m'
 
-Commands:
-  next      Show the next pending task and its instructions
-  status    Show status summary of all tasks
-  verify    Run verification on current state, update PLAN.md, commit
-  complete  Mark a task as done and commit (usage: complete <task-id> [message])
+# ═══════════════════════════════════════════════════════════════
+#                     ARGUMENT PARSING
+# ═══════════════════════════════════════════════════════════════
 
-Typical workflow with Copilot CLI:
-  1. ./ralph/loop.sh next          # See what to do
-  2. (Copilot CLI does the work)
-  3. ./ralph/loop.sh complete <id> "description of what was done"
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --status)    MODE="status"; shift ;;
+        --next)      MODE="next"; shift ;;
+        --dry-run)   DRY_RUN=true; shift ;;
+        --model)     MODEL="$2"; shift 2 ;;
+        -h|--help)   MODE="help"; shift ;;
+        [0-9]*)      MAX_ITERATIONS="$1"; shift ;;
+        *)           echo "Unknown option: $1"; exit 1 ;;
+    esac
+done
 
-EOF
-    exit 1
-}
+# ═══════════════════════════════════════════════════════════════
+#                     HELPER FUNCTIONS
+# ═══════════════════════════════════════════════════════════════
 
-cmd_next() {
-    "$SCRIPT_DIR/update-plan.sh" --next
-}
-
-cmd_status() {
+show_status() {
     "$SCRIPT_DIR/update-plan.sh" --status
 }
 
-cmd_verify() {
-    echo "=== Running Verification ==="
+show_next() {
+    "$SCRIPT_DIR/update-plan.sh" --next
+}
 
-    # Check if verify.sh exists yet (it's created as part of the plan)
-    if [ -x "$SCRIPT_DIR/verify.sh" ]; then
-        "$SCRIPT_DIR/verify.sh"
-        local result=$?
+show_help() {
+    cat <<EOF
+Ralph Loop — autonomous AI coding agent orchestrator for LinuxCNC Bot
+
+Repeatedly invokes GitHub Copilot CLI to work through tasks in PLAN.md.
+Each iteration gets a fresh context window. State persists via PLAN.md,
+progress.txt, and git commits.
+
+Usage:
+  ./ralph/loop.sh              Run loop (default: 20 iterations)
+  ./ralph/loop.sh 10           Run with max 10 iterations
+  ./ralph/loop.sh --status     Show plan status (no execution)
+  ./ralph/loop.sh --next       Show next task (no execution)
+  ./ralph/loop.sh --dry-run    Preview what would be sent to copilot
+  ./ralph/loop.sh --model X    Use specific AI model (e.g., claude-sonnet-4)
+
+The loop:
+  1. Reads PLAN.md for the next ⬜ pending task
+  2. Invokes 'copilot -p <prompt>' with the task instructions
+  3. Checks output for completion signal: ${COMPLETE_SIGNAL}
+  4. Logs results to ralph/progress.txt
+  5. Commits changes to git
+  6. Repeats until all tasks pass or max iterations reached
+
+EOF
+    exit 0
+}
+
+ensure_progress_file() {
+    if [[ ! -f "$PROGRESS_FILE" ]]; then
+        cat > "$PROGRESS_FILE" <<'EOF'
+# Ralph Loop Progress Log
+# Append-only log of what happened each iteration.
+# The last ~20 lines are fed to copilot as short-term memory.
+EOF
+    fi
+}
+
+get_progress_tail() {
+    if [[ -f "$PROGRESS_FILE" ]]; then
+        tail -20 "$PROGRESS_FILE"
     else
-        echo "verify.sh not yet created — skipping VM verification"
-        echo "Running basic checks instead..."
+        echo "(no previous progress)"
+    fi
+}
 
-        local checks_passed=0
-        local checks_total=0
+find_next_task() {
+    # Extract first ⬜ task line from PLAN.md
+    grep -n "^- ⬜ \*\*" "$PLAN_FILE" | head -1
+}
 
-        # Check repo structure
-        checks_total=$((checks_total + 1))
-        if [ -f "$PLAN_FILE" ]; then
-            echo "  ✓ PLAN.md exists"
-            checks_passed=$((checks_passed + 1))
-        else
-            echo "  ✗ PLAN.md missing"
+extract_task_block() {
+    # Given a line number, extract the task and its instruction block
+    local line_num="$1"
+    local task_line
+    task_line=$(sed -n "${line_num}p" "$PLAN_FILE")
+
+    # Grab indented lines following the task (instructions, depends-on, etc.)
+    local block=""
+    local next_line=$((line_num + 1))
+    while true; do
+        local l
+        l=$(sed -n "${next_line}p" "$PLAN_FILE") || break
+        # Stop at next task, blank line, or section header
+        if [[ "$l" =~ ^-\ [⬜🔄✅❌] ]] || [[ "$l" =~ ^## ]] || [[ -z "$l" ]]; then
+            break
         fi
+        block+="$l"$'\n'
+        next_line=$((next_line + 1))
+    done
 
-        checks_total=$((checks_total + 1))
-        if [ -f "$REPO_ROOT/README.md" ]; then
-            echo "  ✓ README.md exists"
-            checks_passed=$((checks_passed + 1))
-        else
-            echo "  ✗ README.md missing"
-        fi
+    echo "$task_line"
+    echo "$block"
+}
 
-        checks_total=$((checks_total + 1))
-        if [ -f "$REPO_ROOT/.gitignore" ]; then
-            echo "  ✓ .gitignore exists"
-            checks_passed=$((checks_passed + 1))
-        else
-            echo "  ✗ .gitignore missing"
-        fi
+extract_task_id() {
+    # Pull task ID from a task line like: - ⬜ **create-vm-script** — ...
+    echo "$1" | sed 's/.*\*\*\([^*]*\)\*\*.*/\1/'
+}
 
-        checks_total=$((checks_total + 1))
-        if [ -d "$REPO_ROOT/scripts" ]; then
-            echo "  ✓ scripts/ directory exists"
-            checks_passed=$((checks_passed + 1))
-        else
-            echo "  ✗ scripts/ directory missing"
-        fi
+build_prompt() {
+    local task_block="$1"
+    local progress_tail="$2"
 
-        checks_total=$((checks_total + 1))
-        if [ -d "$REPO_ROOT/config/profiles" ]; then
-            echo "  ✓ config/profiles/ exists"
-            checks_passed=$((checks_passed + 1))
-        else
-            echo "  ✗ config/profiles/ missing"
-        fi
-
-        # Check scripts are executable
-        for script in scripts/install-qemu.sh scripts/fetch-deps.sh ralph/commit.sh ralph/update-plan.sh ralph/loop.sh; do
-            checks_total=$((checks_total + 1))
-            if [ -x "$REPO_ROOT/$script" ]; then
-                echo "  ✓ $script is executable"
-                checks_passed=$((checks_passed + 1))
-            elif [ -f "$REPO_ROOT/$script" ]; then
-                echo "  ⚠ $script exists but not executable"
-            else
-                echo "  ✗ $script missing"
-            fi
-        done
-
-        echo ""
-        echo "Basic checks: $checks_passed/$checks_total passed"
-        local result=0
-        if [ "$checks_passed" -lt "$checks_total" ]; then
-            result=1
-        fi
+    # Read the build prompt template
+    if [[ -f "$PROMPT_FILE" ]]; then
+        local template
+        template=$(cat "$PROMPT_FILE")
+    else
+        echo "ERROR: Build prompt not found at $PROMPT_FILE" >&2
+        exit 1
     fi
 
-    return ${result:-0}
+    # Inject task and progress into the template
+    local prompt="$template
+
+## YOUR ASSIGNED TASK FOR THIS ITERATION
+
+${task_block}
+
+## RECENT PROGRESS (last 20 lines of ralph/progress.txt)
+
+${progress_tail}
+"
+    echo "$prompt"
 }
 
-cmd_complete() {
-    local task_id="${1:?ERROR: task-id required}"
-    local message="${2:-completed}"
+invoke_copilot() {
+    local prompt="$1"
+    local cli_args=(-p "$prompt" --allow-all-tools --no-ask-user)
+    if [[ -n "$MODEL" ]]; then
+        cli_args+=(--model "$MODEL")
+    fi
 
-    # Update plan
-    "$SCRIPT_DIR/update-plan.sh" "$task_id" "done" "$message"
-
-    # Commit
-    "$SCRIPT_DIR/commit.sh" "$task_id" "$message"
+    copilot "${cli_args[@]}" 2>&1
 }
 
-# Main
-case "${1:-}" in
-    next)     cmd_next ;;
-    status)   cmd_status ;;
-    verify)   cmd_verify ;;
-    complete)
-        shift
-        cmd_complete "$@"
-        ;;
-    --help|-h) usage ;;
-    "")        usage ;;
-    *)
-        echo "Unknown command: $1"
-        usage
-        ;;
+log_progress() {
+    local iteration="$1"
+    local task_id="$2"
+    local status="$3"
+    local summary="$4"
+    local timestamp
+    timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+    cat >> "$PROGRESS_FILE" <<EOF
+
+--- iteration ${iteration} (${timestamp}) ---
+Task: ${task_id}
+Status: ${status}
+Summary: ${summary}
+EOF
+}
+
+# ═══════════════════════════════════════════════════════════════
+#                     MODE DISPATCH
+# ═══════════════════════════════════════════════════════════════
+
+case "$MODE" in
+    status) show_status; exit 0 ;;
+    next)   show_next; exit 0 ;;
+    help)   show_help ;;
 esac
+
+# ═══════════════════════════════════════════════════════════════
+#                     PRE-FLIGHT CHECKS
+# ═══════════════════════════════════════════════════════════════
+
+if ! command -v copilot &>/dev/null; then
+    echo -e "${RED}ERROR: 'copilot' CLI not found.${NC}"
+    echo "Install: npm install -g @github/copilot"
+    exit 1
+fi
+
+if [[ ! -f "$PLAN_FILE" ]]; then
+    echo -e "${RED}ERROR: PLAN.md not found at $PLAN_FILE${NC}"
+    exit 1
+fi
+
+if [[ ! -f "$PROMPT_FILE" ]]; then
+    echo -e "${RED}ERROR: Build prompt not found at $PROMPT_FILE${NC}"
+    echo "Create ralph/PROMPT_build.md first."
+    exit 1
+fi
+
+ensure_progress_file
+
+# ═══════════════════════════════════════════════════════════════
+#                     MAIN LOOP
+# ═══════════════════════════════════════════════════════════════
+
+ITERATION=0
+COMPLETE=false
+SESSION_START=$(date +%s)
+
+echo ""
+echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
+echo -e "${WHITE}  RALPH LOOP — LinuxCNC Bot${NC}"
+echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
+echo ""
+echo -e "  Max iterations: ${YELLOW}${MAX_ITERATIONS}${NC}"
+echo -e "  Model:          ${YELLOW}${MODEL:-default}${NC}"
+echo -e "  Plan:           ${GRAY}${PLAN_FILE}${NC}"
+echo -e "  Dry run:        ${YELLOW}${DRY_RUN}${NC}"
+echo ""
+
+show_status
+echo ""
+
+while [ "$ITERATION" -lt "$MAX_ITERATIONS" ]; do
+    ITERATION=$((ITERATION + 1))
+    TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+
+    echo ""
+    echo -e "${CYAN}═══ [$TIMESTAMP] Iteration $ITERATION / $MAX_ITERATIONS ═══${NC}"
+
+    # Find next pending task
+    next_task_match=$(find_next_task)
+    if [[ -z "$next_task_match" ]]; then
+        echo -e "${GREEN}All tasks complete! Nothing left to do.${NC}"
+        COMPLETE=true
+        break
+    fi
+
+    line_num=$(echo "$next_task_match" | cut -d: -f1)
+    task_block=$(extract_task_block "$line_num")
+    task_id=$(extract_task_id "$(echo "$task_block" | head -1)")
+
+    echo -e "  Task: ${WHITE}${task_id}${NC}"
+    echo -e "  ${GRAY}$(echo "$task_block" | head -1)${NC}"
+
+    # Build prompt
+    progress_tail=$(get_progress_tail)
+    prompt=$(build_prompt "$task_block" "$progress_tail")
+
+    # Dry-run mode: show prompt and exit
+    if [[ "$DRY_RUN" == "true" ]]; then
+        echo ""
+        echo -e "${YELLOW}  DRY RUN — prompt that would be sent:${NC}"
+        echo "────────────────────────────────────────────────────────"
+        echo "$prompt"
+        echo "────────────────────────────────────────────────────────"
+        echo ""
+        echo -e "${GRAY}  (No copilot invocation in dry-run mode)${NC}"
+        exit 0
+    fi
+
+    # Mark task as in-progress in PLAN.md
+    "$SCRIPT_DIR/update-plan.sh" "$task_id" "in-progress" "Starting iteration $ITERATION" 2>/dev/null || true
+
+    # Invoke copilot with fresh context
+    echo -e "  ${CYAN}Invoking copilot CLI...${NC}"
+    START_TIME=$(date +%s)
+    OUTPUT=$(invoke_copilot "$prompt")
+    END_TIME=$(date +%s)
+    DURATION=$((END_TIME - START_TIME))
+
+    echo -e "  ${GRAY}Copilot finished in ${DURATION}s${NC}"
+
+    # Check for completion signal
+    if echo "$OUTPUT" | grep -q "$COMPLETE_SIGNAL"; then
+        echo -e "  ${GREEN}✓ Task completed (completion signal received)${NC}"
+
+        # Update plan and log
+        "$SCRIPT_DIR/update-plan.sh" "$task_id" "done" "Completed in iteration $ITERATION (${DURATION}s)" 2>/dev/null || true
+        log_progress "$ITERATION" "$task_id" "PASSED" "Completed successfully in ${DURATION}s"
+
+        # Commit changes
+        "$SCRIPT_DIR/commit.sh" "$task_id" "Completed: $task_id" 2>/dev/null || true
+
+    else
+        echo -e "  ${YELLOW}⚠ No completion signal. Task may need more work.${NC}"
+
+        # Log what happened (last 5 lines of output as summary)
+        summary=$(echo "$OUTPUT" | tail -5 | tr '\n' ' ')
+        log_progress "$ITERATION" "$task_id" "INCOMPLETE" "$summary"
+
+        # Still commit any partial work
+        "$SCRIPT_DIR/commit.sh" "$task_id" "WIP: $task_id (iteration $ITERATION)" 2>/dev/null || true
+    fi
+
+    # Brief pause between iterations
+    sleep 2
+done
+
+# ═══════════════════════════════════════════════════════════════
+#                     SESSION SUMMARY
+# ═══════════════════════════════════════════════════════════════
+
+SESSION_END=$(date +%s)
+TOTAL_DURATION=$((SESSION_END - SESSION_START))
+
+echo ""
+echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
+echo -e "${WHITE}  SESSION COMPLETE${NC}"
+echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
+echo ""
+echo -e "  Iterations: ${YELLOW}${ITERATION}${NC}"
+echo -e "  Duration:   ${YELLOW}$((TOTAL_DURATION / 60))m $((TOTAL_DURATION % 60))s${NC}"
+echo ""
+
+show_status
+
+if [[ "$COMPLETE" == "true" ]]; then
+    echo ""
+    echo -e "  ${GREEN}✓ ALL TASKS COMPLETED${NC}"
+    exit 0
+else
+    echo ""
+    echo -e "  ${YELLOW}◐ Max iterations reached. Re-run to continue.${NC}"
+    echo -e "  ${GRAY}  State preserved in PLAN.md and ralph/progress.txt${NC}"
+    exit 1
+fi
