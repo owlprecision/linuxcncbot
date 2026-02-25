@@ -11,3 +11,7 @@ Next: create-vm-script (QEMU VM creation)
 Task: create-vm-script
 Status: PASSED
 Summary: Completed successfully in 87s
+[provision-vm-script - WIP] Completed: Reviewed PLAN/task context and existing VM/profile scripts. Remaining: implement provision script and validate.
+[provision-vm-script - WIP] Completed: Added scripts/provision-vm.sh with SSH-based provisioning logic and idempotent remote install steps. Remaining: run final validation/update PLAN and commit.
+[provision-vm-script - WIP] Completed: Validated provision-vm.sh syntax/help and made it executable. Remaining: finalize commit.
+[provision-vm-script - DONE] Completed: Implemented scripts/provision-vm.sh, marked PLAN task complete, and validated script syntax/help. Remaining: none.

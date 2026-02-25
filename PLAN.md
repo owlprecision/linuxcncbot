@@ -22,7 +22,7 @@
 - ✅ **create-vm-script** — `scripts/create-vm.sh` — create QEMU VM with Debian 12 + preseed
   - *Depends on:* install-qemu-script, fetch-deps-script, preseed-config
   - *Instructions:* Create a script that builds a qcow2 disk image (20GB), launches QEMU with the Debian netinst ISO and preseed for unattended install, configures SSH port forwarding (host 2222 → guest 22), and waits for install completion. Use HVF acceleration on macOS when available.
-- ⬜ **provision-vm-script** — `scripts/provision-vm.sh` — install LinuxCNC in the VM
+- ✅ **provision-vm-script** — `scripts/provision-vm.sh` — install LinuxCNC in the VM
   - *Depends on:* create-vm-script
   - *Instructions:* SSH into the VM and: add LinuxCNC apt repo (linuxcnc.org), install RT_PREEMPT kernel, install linuxcnc + linuxcnc-dev + halcmd, install linuxcnc-ethercat (lcec), create /home/cnc/linuxcnc/ working directory. Use the SSH key set up during preseed.
 - ⬜ **vm-control-script** — `scripts/vm-control.sh` — VM lifecycle management
@@ -99,3 +99,4 @@
 <!-- Ralph loop appends timestamped entries here -->
 - `2026-02-25T17:22:50Z` **create-vm-script** → 🔄 in-progress — Starting iteration 1
 - `2026-02-25T17:24:17Z` **create-vm-script** → ✅ done — Completed in iteration 1 (87s)
+- `2026-02-25T21:28:54Z` **provision-vm-script** → 🔄 in-progress — Starting iteration 1
