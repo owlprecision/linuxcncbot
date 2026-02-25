@@ -136,3 +136,5 @@ Summary: Completed successfully in 146s
 Task: test-gcode-basic
 Status: PASSED
 Summary: Completed successfully in 136s
+[test-axis-limits - WIP] Completed: Started iteration planning, reviewed recent tests, and set implementation approach for soft-limit rejection checks. Remaining: implement test script, validate, update PLAN, and commit.
+[test-axis-limits - DONE] Completed: Implemented tests/test-axis-limits.sh with INI-driven +/- limit violation moves for X/Y/Z, validated bash syntax, and confirmed expected prerequisite failure path in current environment (linuxcnc missing). Remaining: none.

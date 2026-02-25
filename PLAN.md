@@ -76,7 +76,7 @@
 - ✅ **test-gcode-basic** — `tests/test-gcode-basic.sh` — run basic G-code
   - *Depends on:* configure-script
   - *Instructions:* Run a simple G-code program (G0 X10 Y10 Z-5; G1 X20 F100; M2) through LinuxCNC in batch mode. Verify exit code 0 and no error in logs.
-- ⬜ **test-axis-limits** — `tests/test-axis-limits.sh` — verify soft limits
+- ✅ **test-axis-limits** — `tests/test-axis-limits.sh` — verify soft limits
   - *Depends on:* configure-script
   - *Instructions:* Attempt moves beyond configured soft limits, verify LinuxCNC rejects them. Test both positive and negative limits on all axes.
 
@@ -129,3 +129,4 @@
 - `2026-02-25T22:30:58Z` **test-hal-pins** → ✅ done — Completed in iteration 11 (146s)
 - `2026-02-25T22:31:00Z` **test-gcode-basic** → 🔄 in-progress — Starting iteration 12
 - `2026-02-25T22:33:24Z` **test-gcode-basic** → ✅ done — Completed in iteration 12 (136s)
+- `2026-02-25T22:33:34Z` **test-axis-limits** → 🔄 in-progress — Starting iteration 13
