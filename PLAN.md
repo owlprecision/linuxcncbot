@@ -70,7 +70,7 @@
 - ✅ **test-config-loads** — `tests/test-config-loads.sh` — verify config parses
   - *Depends on:* configure-script
   - *Instructions:* Run `linuxcnc --check <ini>` or equivalent to verify INI/HAL parse without errors. Exit 0 on success.
-- ⬜ **test-hal-pins** — `tests/test-hal-pins.sh` — verify HAL pins
+- ✅ **test-hal-pins** — `tests/test-hal-pins.sh` — verify HAL pins
   - *Depends on:* configure-script
   - *Instructions:* Start halcmd, load HAL file, verify expected pins exist (joint.0/1/2.motor-pos-cmd, etc.). Compare against expected pin list from profile.
 - ⬜ **test-gcode-basic** — `tests/test-gcode-basic.sh` — run basic G-code
@@ -125,3 +125,4 @@
 - `2026-02-25T22:26:27Z` **loop-script** → ✅ done — Completed in iteration 9 (232s)
 - `2026-02-25T22:26:29Z` **test-config-loads** → 🔄 in-progress — Starting iteration 10
 - `2026-02-25T22:28:30Z` **test-config-loads** → ✅ done — Completed in iteration 10 (121s)
+- `2026-02-25T22:28:32Z` **test-hal-pins** → 🔄 in-progress — Starting iteration 11

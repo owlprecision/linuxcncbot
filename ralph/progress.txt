@@ -121,3 +121,5 @@ Summary: Completed successfully in 232s
 Task: test-config-loads
 Status: PASSED
 Summary: Completed successfully in 121s
+[test-hal-pins - WIP] Completed: Added tests/test-hal-pins.sh with configure fallback, profile-sourced expected pin parsing, and halcmd load/show pin checks. Remaining: run validations and finalize.
+[test-hal-pins - DONE] Completed: Validated syntax and executed tests/test-hal-pins.sh to confirm prerequisite/failure behavior in current environment. Remaining: none.
