@@ -110,7 +110,7 @@
   - *Goal:* convert current generic/sim setup into a profile a user can activate.
   - *Deliverables:* `config/profiles/beckhoff-ek1100-2x-el7031.env`, matching `config/ethercat-conf.xml` mapping, and LinuxCNC INI/HAL wiring for 2 stepper axes.
 
-- ⬜ **stepgen-and-scaling-calibration** — define motion scaling and safe limits
+- ✅ **stepgen-and-scaling-calibration** — define motion scaling and safe limits
   - *Goal:* set pulses-per-unit, max velocity/accel, and conservative startup limits for EL7031-driven steppers.
   - *Deliverables:* checked-in defaults + calibration checklist for first power-on.
 
@@ -186,3 +186,4 @@
 - `2026-02-25T23:26:12Z` **igh-master-runtime-setup** → ✅ done — Completed in iteration 3 (183s)
 - `2026-02-25T23:26:15Z` **beckhoff-el7031-profile** → 🔄 in-progress — Starting iteration 4
 - `2026-02-25T23:32:01Z` **beckhoff-el7031-profile** → ✅ done — Completed in iteration 4 (346s)
+- `2026-02-25T23:32:03Z` **stepgen-and-scaling-calibration** → 🔄 in-progress — Starting iteration 5

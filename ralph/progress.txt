@@ -198,3 +198,7 @@ Summary: Completed successfully in 183s
 Task: beckhoff-el7031-profile
 Status: PASSED
 Summary: Completed successfully in 346s
+[stepgen-and-scaling-calibration - WIP] Completed: Reviewed PLAN/progress/current EL7031 profile and HAL wiring to identify scaling and limit defaults gaps. Remaining: implement conservative scaling/limits and add first power-on calibration checklist, then validate and commit.
+[stepgen-and-scaling-calibration - WIP] Completed: Applied conservative EL7031 profile defaults and HAL scale wiring for velocity/feedback conversion. Remaining: add first power-on calibration checklist, validate generated config, update PLAN, and commit.
+[stepgen-and-scaling-calibration - WIP] Completed: Added EL7031 first power-on calibration checklist and corrected feedback conversion to use reciprocal FB scale defaults. Remaining: mark PLAN done, finalize progress, and commit.
+[stepgen-and-scaling-calibration - DONE] Completed: Set conservative EL7031 startup defaults in beckhoff profile (pulses-per-unit scales, reciprocal feedback scales, lower velocity/accel/display limits), wired scaling in machine-2axis-el7031 HAL, added docs/el7031-first-power-on-calibration-checklist.md, validated configure render and EtherCAT XML parse, and marked PLAN task complete. Remaining: none.
