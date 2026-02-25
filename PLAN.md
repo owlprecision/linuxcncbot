@@ -98,7 +98,7 @@
   - *Goal:* make a user able to clone this repo and run one bootstrap command on an existing PREEMPT-RT LinuxCNC install.
   - *Deliverables:* `scripts/bootstrap-target-host.sh` to install required packages/tools on Debian PREEMPT-RT host, set up repo paths, and verify prerequisites.
 
-- ⬜ **ethercat-nic-setup** — create deterministic EtherCAT NIC setup
+- ✅ **ethercat-nic-setup** — create deterministic EtherCAT NIC setup
   - *Goal:* lock EtherCAT to the dedicated secondary Ethernet card.
   - *Deliverables:* script + docs to identify interface by MAC, set static config, and prevent NetworkManager interference for that NIC.
 
@@ -180,3 +180,4 @@
 - `2026-02-25T22:40:15Z` **adding-ethercat-doc** → 🔄 in-progress — Starting iteration 16
 - `2026-02-25T22:42:34Z` **adding-ethercat-doc** → ✅ done — Completed in iteration 16 (139s)
 - `2026-02-25T23:20:10Z` **target-host-bootstrap** → ✅ done — Completed in iteration 1 (206s)
+- `2026-02-25T23:20:12Z` **ethercat-nic-setup** → 🔄 in-progress — Starting iteration 2
