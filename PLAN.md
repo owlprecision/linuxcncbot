@@ -92,6 +92,47 @@
   - *Depends on:* ethercat-conf-template
   - *Instructions:* Document phase 2 setup: IgH EtherCAT master simulation mode, virtual network interfaces, testing with virtual EtherCAT bus, transitioning from sim to virtual EtherCAT.
 
+## Phase 6: Hardware Handoff (EK1100 + 2x EL7031)
+
+- ⬜ **target-host-bootstrap** — add host-side script for existing LinuxCNC PC
+  - *Goal:* make a user able to clone this repo and run one bootstrap command on an existing PREEMPT-RT LinuxCNC install.
+  - *Deliverables:* `scripts/bootstrap-target-host.sh` to install required packages/tools on Debian PREEMPT-RT host, set up repo paths, and verify prerequisites.
+
+- ⬜ **ethercat-nic-setup** — create deterministic EtherCAT NIC setup
+  - *Goal:* lock EtherCAT to the dedicated secondary Ethernet card.
+  - *Deliverables:* script + docs to identify interface by MAC, set static config, and prevent NetworkManager interference for that NIC.
+
+- ⬜ **igh-master-runtime-setup** — configure EtherCAT master runtime for hardware
+  - *Goal:* ensure IgH EtherCAT master starts consistently on boot and binds the right NIC.
+  - *Deliverables:* configuration + verification steps (`ethercat master`, `ethercat slaves`) captured in scripts/docs.
+
+- ⬜ **beckhoff-el7031-profile** — add concrete hardware profile for EK1100 + 2x EL7031
+  - *Goal:* convert current generic/sim setup into a profile a user can activate.
+  - *Deliverables:* `config/profiles/beckhoff-ek1100-2x-el7031.env`, matching `config/ethercat-conf.xml` mapping, and LinuxCNC INI/HAL wiring for 2 stepper axes.
+
+- ⬜ **stepgen-and-scaling-calibration** — define motion scaling and safe limits
+  - *Goal:* set pulses-per-unit, max velocity/accel, and conservative startup limits for EL7031-driven steppers.
+  - *Deliverables:* checked-in defaults + calibration checklist for first power-on.
+
+- ⬜ **hardware-verification-gates** — add pass/fail hardware bring-up gates
+  - *Goal:* make deployment reproducible before motion testing.
+  - *Deliverables:* scripted checks and expected outputs for:
+    1) EtherCAT bus scan sees EK1100 + both EL7031 terminals  
+    2) LinuxCNC config loads cleanly  
+    3) axis enable/jog test passes at low speed
+
+- ⬜ **one-command-handoff-flow** — finalize user-facing handoff command
+  - *Goal:* a user should run one documented command sequence from a fresh clone.
+  - *Deliverables:* README section: clone → bootstrap target host → apply beckhoff profile → deploy → verify.
+
+- ⬜ **restart-safe-migration-path** — include “start over safely” procedure
+  - *Goal:* if his current machine setup is messy, provide clean re-entry.
+  - *Deliverables:* explicit backup/restore steps for old configs and a clean migration path to this repo-managed setup.
+
+- ⬜ **handoff-readiness-checklist** — provide final “send him the URL” checklist
+  - *Goal:* ensure repo is truly self-service before handoff.
+  - *Checklist:* scripts executable, docs current, profile present, verification passing, rollback documented.
+
 ---
 
 ## Log
