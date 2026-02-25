@@ -25,7 +25,7 @@
 - ✅ **provision-vm-script** — `scripts/provision-vm.sh` — install LinuxCNC in the VM
   - *Depends on:* create-vm-script
   - *Instructions:* SSH into the VM and: add LinuxCNC apt repo (linuxcnc.org), install RT_PREEMPT kernel, install linuxcnc + linuxcnc-dev + halcmd, install linuxcnc-ethercat (lcec), create /home/cnc/linuxcnc/ working directory. Use the SSH key set up during preseed.
-- ⬜ **vm-control-script** — `scripts/vm-control.sh` — VM lifecycle management
+- ✅ **vm-control-script** — `scripts/vm-control.sh` — VM lifecycle management
   - *Depends on:* create-vm-script
   - *Instructions:* Create script with subcommands: `start` (boot VM background, SSH forwarding), `stop` (graceful shutdown then kill), `ssh` (open session), `snapshot <name>` (QEMU snapshot), `restore <name>`, `status` (check running). Store PID in vm/qemu.pid.
 - ⬜ **bootstrap-script** — `scripts/bootstrap.sh` — master orchestrator
@@ -101,3 +101,4 @@
 - `2026-02-25T17:24:17Z` **create-vm-script** → ✅ done — Completed in iteration 1 (87s)
 - `2026-02-25T21:28:54Z` **provision-vm-script** → 🔄 in-progress — Starting iteration 1
 - `2026-02-25T21:30:46Z` **provision-vm-script** → ✅ done — Completed in iteration 1 (112s)
+- `2026-02-25T21:36:35Z` **vm-control-script** → 🔄 in-progress — Starting iteration 1
