@@ -25,6 +25,11 @@ Key rules:
 After implementing:
 - Test your changes where possible (run the script, check syntax, verify file creation)
 - Fix any issues before completing
+- As you work, periodically append status to `ralph/progress.txt` so progress
+  survives if the session is interrupted mid-task:
+  ```
+  [<task-id> - WIP] Completed: <what you've done so far>. Remaining: <what's left>
+  ```
 
 ## On Success
 
