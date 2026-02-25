@@ -187,3 +187,4 @@
 - `2026-02-25T23:26:15Z` **beckhoff-el7031-profile** → 🔄 in-progress — Starting iteration 4
 - `2026-02-25T23:32:01Z` **beckhoff-el7031-profile** → ✅ done — Completed in iteration 4 (346s)
 - `2026-02-25T23:32:03Z` **stepgen-and-scaling-calibration** → 🔄 in-progress — Starting iteration 5
+- `2026-02-25T23:36:54Z` **stepgen-and-scaling-calibration** → ✅ done — Completed in iteration 5 (291s)
