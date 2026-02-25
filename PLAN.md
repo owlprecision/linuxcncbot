@@ -67,7 +67,7 @@
 
 ## Phase 4: Test Suite
 
-- ⬜ **test-config-loads** — `tests/test-config-loads.sh` — verify config parses
+- ✅ **test-config-loads** — `tests/test-config-loads.sh` — verify config parses
   - *Depends on:* configure-script
   - *Instructions:* Run `linuxcnc --check <ini>` or equivalent to verify INI/HAL parse without errors. Exit 0 on success.
 - ⬜ **test-hal-pins** — `tests/test-hal-pins.sh` — verify HAL pins
@@ -123,3 +123,4 @@
 - `2026-02-25T22:22:33Z` **verify-script** → ✅ done — Completed in iteration 8 (205s)
 - `2026-02-25T22:26:13Z` **loop-script** → ✅ done — Completed loop command implementation
 - `2026-02-25T22:26:27Z` **loop-script** → ✅ done — Completed in iteration 9 (232s)
+- `2026-02-25T22:26:29Z` **test-config-loads** → 🔄 in-progress — Starting iteration 10
