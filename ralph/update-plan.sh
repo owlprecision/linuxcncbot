@@ -4,7 +4,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-PLAN_FILE="$REPO_ROOT/PLAN.md"
+PLAN_FILE="$SCRIPT_DIR/PLAN.md"
 
 usage() {
     echo "Usage: $0 <task-id> <status> [message]"

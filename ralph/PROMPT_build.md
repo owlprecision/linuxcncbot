@@ -2,18 +2,18 @@ You are in BUILD MODE for the LinuxCNC Bot project. One task per iteration.
 
 ## On Start
 
-1. Read `PLAN.md` — your assigned task is provided below. That is your ONLY task.
+1. Read `ralph/PLAN.md` — your assigned task is provided below. That is your ONLY task.
 2. Read the recent progress log below to understand what happened in prior iterations.
 3. Run: `git log --oneline -5` to see recent changes.
 4. Examine existing code in the repo to understand current state.
 
 ## Your Task
 
-Implement the assigned task from PLAN.md (provided below). Follow the task's
+Implement the assigned task from `ralph/PLAN.md` (provided below). Follow the task's
 *Instructions* section closely. The task description tells you exactly what file(s)
 to create or modify and what they should do.
 
-Use custom agents from `.github/agents/` for specialist work.
+Use custom agents from `ralph/agents/` for specialist work.
 You (the AI) must choose and delegate to the most appropriate subagent(s) for this task.
 
 Key rules:
@@ -36,7 +36,7 @@ After implementing:
 
 ## On Success
 
-1. Mark the task done in PLAN.md: change `⬜` to `✅` on the task line
+1. Mark the task done in `ralph/PLAN.md`: change `⬜` to `✅` on the task line
 2. Commit your changes: `git add -A && git commit -m "ralph[<task-id>]: <description>"`
    Include trailer: `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>`
 

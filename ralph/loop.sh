@@ -4,10 +4,10 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-PLAN_FILE="$REPO_ROOT/PLAN.md"
+PLAN_FILE="$SCRIPT_DIR/PLAN.md"
 PROGRESS_FILE="$REPO_ROOT/ralph/progress.txt"
 PROMPT_FILE="$SCRIPT_DIR/PROMPT_build.md"
-AGENTS_DIR="$REPO_ROOT/.github/agents"
+AGENTS_DIR="$SCRIPT_DIR/agents"
 COMPLETE_SIGNAL='<promise>COMPLETE</promise>'
 
 # Defaults
@@ -130,7 +130,7 @@ extract_task_id() { echo "$1" | sed 's/.*\*\*\([^*]*\)\*\*.*/\1/'; }
 
 list_available_agents() {
   if [[ ! -d "$AGENTS_DIR" ]]; then
-    echo "- (none found in .github/agents/)"
+    echo "- (none found in ralph/agents/)"
     return
   fi
   local found=0
@@ -138,7 +138,7 @@ list_available_agents() {
     found=1
     echo "- $(basename "$f" .agent.md)"
   done < <(find "$AGENTS_DIR" -maxdepth 1 -name "*.agent.md" -type f | sort)
-  if [[ "$found" -eq 0 ]]; then echo "- (none found in .github/agents/)"; fi
+  if [[ "$found" -eq 0 ]]; then echo "- (none found in ralph/agents/)"; fi
 }
 
 build_prompt() {
@@ -154,7 +154,7 @@ build_prompt() {
     resume_note="
 ## IMPORTANT: RESUMING INTERRUPTED TASK
 
-This task was previously started but interrupted (marked 🔄 in PLAN.md).
+This task was previously started but interrupted (marked 🔄 in ralph/PLAN.md).
 Check progress log and git log; continue from current state.
 "
   fi
@@ -216,7 +216,7 @@ case "$MODE" in
 esac
 
 command -v copilot >/dev/null 2>&1 || { echo "ERROR: copilot CLI not found"; exit 1; }
-[[ -f "$PLAN_FILE" ]] || { echo "ERROR: PLAN.md not found"; exit 1; }
+[[ -f "$PLAN_FILE" ]] || { echo "ERROR: ralph/PLAN.md not found"; exit 1; }
 [[ -f "$PROMPT_FILE" ]] || { echo "ERROR: ralph/PROMPT_build.md not found"; exit 1; }
 
 ensure_progress_file
