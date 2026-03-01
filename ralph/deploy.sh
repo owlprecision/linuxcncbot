@@ -157,10 +157,10 @@ deploy_ssh() {
 }
 
 main() {
-  local deploy_mode=""
+  local deploy_mode="local"
   for arg in "$@"; do
     case "${arg}" in
-      --local) deploy_mode="local" ;;
+      --ssh) deploy_mode="ssh" ;;
     esac
   done
 
@@ -171,10 +171,10 @@ main() {
     return 1
   fi
 
-  if [[ "${deploy_mode}" == "local" ]]; then
-    deploy_local
-  else
+  if [[ "${deploy_mode}" == "ssh" ]]; then
     deploy_ssh
+  else
+    deploy_local
   fi
 }
 

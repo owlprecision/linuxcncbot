@@ -46,10 +46,10 @@ run_tests() {
 }
 
 collect_hal_pins() {
-  if [[ "${DEPLOY_MODE:-}" == "local" ]]; then
-    collect_hal_pins_local
-  else
+  if [[ "${DEPLOY_MODE:-local}" == "ssh" ]]; then
     collect_hal_pins_ssh
+  else
+    collect_hal_pins_local
   fi
 }
 
@@ -213,9 +213,10 @@ PY
 }
 
 main() {
+  DEPLOY_MODE="local"
   for arg in "$@"; do
     case "${arg}" in
-      --local) DEPLOY_MODE="local" ;;
+      --ssh) DEPLOY_MODE="ssh" ;;
     esac
   done
 

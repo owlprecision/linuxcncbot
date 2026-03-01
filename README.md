@@ -36,20 +36,20 @@ ETHERCAT_NIC_MAC="aa:bb:cc:dd:ee:ff"
 
 # 5) Render + deploy LinuxCNC config
 ./ralph/configure.sh
-./ralph/deploy.sh --local
+./ralph/deploy.sh
 
 # 6) Verify
-./ralph/verify.sh --local
+./ralph/verify.sh
 ```
 
-### Deploying to a remote machine / VM
+### Deploying to a VM (for development/testing)
 
-If deploying over SSH instead of locally, use the SSH-based deploy:
+If deploying over SSH (e.g., to a QEMU VM for the ralph loop), use `--ssh`:
 
 ```bash
-VM_SSH_HOST=<host> VM_SSH_PORT=<port> VM_SSH_USER=<user> \
-  VM_SSH_KEY="$HOME/.ssh/id_ed25519" VM_LINUXCNC_DIR="/home/<user>/linuxcnc" \
-  ./ralph/deploy.sh
+VM_SSH_HOST=localhost VM_SSH_PORT=2222 VM_SSH_USER=cnc \
+  VM_SSH_KEY="$HOME/.ssh/id_ed25519" VM_LINUXCNC_DIR="/home/cnc/linuxcnc" \
+  ./ralph/deploy.sh --ssh
 ```
 
 ## First hardware motion test
