@@ -33,6 +33,8 @@ if [[ ! -f "${profile_path}" ]]; then
   exit 1
 fi
 
+echo "Using profile: ${profile_env_file}"
+
 set -a
 source "${profile_path}"
 set +a
@@ -53,6 +55,12 @@ for template_path in "${machine_ini_path}" "${machine_hal_path}" "${CONFIG_DIR}/
     exit 1
   fi
 done
+
+echo "Generating configs from templates:"
+echo "  ${machine_ini_template} -> build/machine.ini"
+echo "  ${machine_hal_template} -> build/machine.hal"
+echo "  sim.hal -> build/sim.hal"
+echo "  ${ethercat_conf_template} -> build/ethercat-conf.xml"
 
 envsubst < "${machine_ini_path}" > "${BUILD_DIR}/machine.ini"
 envsubst < "${machine_hal_path}" > "${BUILD_DIR}/machine.hal"
@@ -113,3 +121,8 @@ print(json.dumps(manifest, indent=2))
 PY
 
 cat "${BUILD_DIR}/manifest.json"
+
+echo ""
+echo "Config generated successfully in build/"
+echo "Next: run deploy.sh or copy build/ contents to your LinuxCNC configs directory."
+echo "NOTE: Do NOT copy from config/ — those are templates with unresolved variables."

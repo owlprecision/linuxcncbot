@@ -78,19 +78,41 @@ emit_json() {
     "${errors_json}"
 }
 
-main() {
-  load_profile || return 1
+deploy_local() {
+  local linuxcnc_dir="${LINUXCNC_DIR:-${VM_LINUXCNC_DIR:-$HOME/linuxcnc}}"
+  local config_dir="${linuxcnc_dir}/configs/config"
 
+  mkdir -p "${config_dir}"
+
+  while IFS= read -r rel_file; do
+    deployed_files+=("${rel_file}")
+  done < <(cd "${BUILD_DIR}" && find . -type f | sed 's#^\./##' | sort)
+
+  if ! rsync -a --delete "${BUILD_DIR}/" "${config_dir}/"; then
+    add_error "Failed to copy build files to ${config_dir}"
+    return 1
+  fi
+
+  local comp_file
+  while IFS= read -r comp_file; do
+    [[ -n "${comp_file}" ]] || continue
+    if (cd "${config_dir}" && halcompile --install "${comp_file}") >/dev/null 2>&1; then
+      compiled_comp_files+=("${comp_file}")
+    else
+      add_error "Failed to compile component: ${comp_file}"
+      return 1
+    fi
+  done < <(cd "${BUILD_DIR}" && find . -type f -name '*.comp' | sed 's#^\./##' | sort)
+
+  return 0
+}
+
+deploy_ssh() {
   VM_SSH_HOST="${VM_SSH_HOST:-localhost}"
   VM_SSH_PORT="${VM_SSH_PORT:-2222}"
   VM_SSH_USER="${VM_SSH_USER:-cnc}"
   VM_SSH_KEY="${VM_SSH_KEY:-$HOME/.ssh/id_ed25519}"
   VM_LINUXCNC_DIR="${VM_LINUXCNC_DIR:-/home/cnc/linuxcnc}"
-
-  if [[ ! -d "${BUILD_DIR}" ]]; then
-    add_error "Build directory not found: ${BUILD_DIR}"
-    return 1
-  fi
 
   if [[ ! -f "${VM_SSH_KEY}" ]]; then
     add_error "SSH key not found: ${VM_SSH_KEY}"
@@ -108,14 +130,14 @@ main() {
     -o StrictHostKeyChecking=accept-new
   )
 
-  if ! ssh "${ssh_opts[@]}" "${VM_SSH_USER}@${VM_SSH_HOST}" "mkdir -p '${VM_LINUXCNC_DIR}/config'" >/dev/null 2>&1; then
-    add_error "Failed to create remote directory: ${VM_LINUXCNC_DIR}/config"
+  if ! ssh "${ssh_opts[@]}" "${VM_SSH_USER}@${VM_SSH_HOST}" "mkdir -p '${VM_LINUXCNC_DIR}/configs/config'" >/dev/null 2>&1; then
+    add_error "Failed to create remote directory: ${VM_LINUXCNC_DIR}/configs/config"
     return 1
   fi
 
   if ! rsync -az --delete -e "ssh -i ${VM_SSH_KEY} -p ${VM_SSH_PORT} -o BatchMode=yes -o StrictHostKeyChecking=accept-new" \
-      "${BUILD_DIR}/" "${VM_SSH_USER}@${VM_SSH_HOST}:${VM_LINUXCNC_DIR}/config/" >/dev/null 2>&1; then
-    add_error "Failed to rsync build directory to ${VM_SSH_HOST}:${VM_LINUXCNC_DIR}/config"
+      "${BUILD_DIR}/" "${VM_SSH_USER}@${VM_SSH_HOST}:${VM_LINUXCNC_DIR}/configs/config/" >/dev/null 2>&1; then
+    add_error "Failed to rsync build directory to ${VM_SSH_HOST}:${VM_LINUXCNC_DIR}/configs/config"
     return 1
   fi
 
@@ -123,7 +145,7 @@ main() {
   while IFS= read -r comp_file; do
     [[ -n "${comp_file}" ]] || continue
     if ssh "${ssh_opts[@]}" "${VM_SSH_USER}@${VM_SSH_HOST}" \
-      "cd '${VM_LINUXCNC_DIR}/config' && halcompile --install '${comp_file}'" >/dev/null 2>&1; then
+      "cd '${VM_LINUXCNC_DIR}/configs/config' && halcompile --install '${comp_file}'" >/dev/null 2>&1; then
       compiled_comp_files+=("${comp_file}")
     else
       add_error "Failed to compile component: ${comp_file}"
@@ -134,7 +156,29 @@ main() {
   return 0
 }
 
-if ! main; then
+main() {
+  local deploy_mode=""
+  for arg in "$@"; do
+    case "${arg}" in
+      --local) deploy_mode="local" ;;
+    esac
+  done
+
+  load_profile || return 1
+
+  if [[ ! -d "${BUILD_DIR}" ]]; then
+    add_error "Build directory not found: ${BUILD_DIR}"
+    return 1
+  fi
+
+  if [[ "${deploy_mode}" == "local" ]]; then
+    deploy_local
+  else
+    deploy_ssh
+  fi
+}
+
+if ! main "$@"; then
   emit_json
   exit 1
 fi

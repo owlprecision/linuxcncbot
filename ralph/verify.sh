@@ -46,6 +46,34 @@ run_tests() {
 }
 
 collect_hal_pins() {
+  if [[ "${DEPLOY_MODE:-}" == "local" ]]; then
+    collect_hal_pins_local
+  else
+    collect_hal_pins_ssh
+  fi
+}
+
+collect_hal_pins_local() {
+  HAL_PIN_STATUS="error"
+  HAL_PIN_OUTPUT=""
+
+  local hal_output
+  local hal_status
+
+  set +e
+  hal_output="$(halcmd show pin 2>&1)"
+  hal_status=$?
+  set -e
+
+  if [[ ${hal_status} -eq 0 ]]; then
+    HAL_PIN_STATUS="ok"
+    HAL_PIN_OUTPUT="${hal_output}"
+  else
+    HAL_PIN_OUTPUT="HAL pin dump unavailable: 'halcmd show pin' failed. Output: ${hal_output}"
+  fi
+}
+
+collect_hal_pins_ssh() {
   VM_SSH_HOST="${VM_SSH_HOST:-localhost}"
   VM_SSH_PORT="${VM_SSH_PORT:-2222}"
   VM_SSH_USER="${VM_SSH_USER:-cnc}"
@@ -185,6 +213,12 @@ PY
 }
 
 main() {
+  for arg in "$@"; do
+    case "${arg}" in
+      --local) DEPLOY_MODE="local" ;;
+    esac
+  done
+
   if ! load_profile; then
     TEST_JSON_RAW='[{"name":"setup","status":"fail","output":"Profile file not found while loading active/default profile."}]'
     TEST_EXIT_CODE=1
