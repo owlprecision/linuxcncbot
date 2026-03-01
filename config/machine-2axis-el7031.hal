@@ -1,11 +1,10 @@
 # LinuxCNC HAL wiring for Beckhoff EK1100 + 2x EL7031 (2-axis XY)
 
 loadrt [KINS]KINEMATICS
-loadrt [EMCMOT]EMCMOT base_period_nsec=0 servo_period_nsec=${SERVO_PERIOD} num_joints=[KINS]JOINTS
-loadrt threads name1=servo-thread period1=${SERVO_PERIOD}
+loadrt [EMCMOT]EMCMOT base_period_nsec=0 servo_period_nsec=[EMCMOT]SERVO_PERIOD num_joints=[KINS]JOINTS
 
-# EtherCAT master and Beckhoff chain from build/ethercat-conf.xml
-loadusr -W lcec_conf build/ethercat-conf.xml
+# EtherCAT master and Beckhoff chain
+loadusr -W lcec_conf ethercat-conf.xml
 loadrt lcec
 loadrt scale count=4
 
