@@ -17,10 +17,6 @@ addf scale.2 servo-thread
 addf scale.3 servo-thread
 addf lcec.write-all servo-thread
 
-# Terminal operating modes (EL7031: velocity mode for simple initial wiring)
-setp lcec.0.1.opmode 1
-setp lcec.0.2.opmode 1
-
 # --- Axis X / Joint 0 via slave 1 (first EL7031) ---
 net x-amp-enable      joint.0.amp-enable-out => lcec.0.1.st-enable
 setp scale.0.gain ${AXIS_X_SCALE}
